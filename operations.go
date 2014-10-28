@@ -12,12 +12,13 @@ const (
 	OPERATIONS = "operations"
 	LOAD       = "load"
 
-	OPTYPE   = "optype"
-	OPGET    = "get"
-	OPPUT    = "put"
-	OPDELETE = "delete"
-	OPSCAN   = "scan"
-	OPQUERY  = "query"
+	OPTYPE     = "optype"
+	OPGET      = "get"
+	OPPUT      = "put"
+	OPDELETE   = "delete"
+	OPSCAN     = "scan"
+	OPQUERY    = "query"
+	OPEXEC_UDF = "exec_udf"
 
 	NAMESPACE = "namespace"
 	SET       = "set"
@@ -33,11 +34,17 @@ const (
 
 	VALTYPE  = "type"
 	VALRANGE = "range"
+	VALCONST = "val"
 
 	STATEMENT    = "statement"
 	FILTER_EQ    = "equal"
 	FILTER_RANGE = "range"
 	BIN_NAME     = "bin_name"
+	CREATE_INDEX = "create_index"
+
+	PACKAGE_NAME = "package"
+	FUNC_NAME    = "function"
+	ARGS         = "args"
 )
 
 func makeOp(client *aerospike.Client, op map[interface{}]interface{}) func() {
@@ -53,6 +60,8 @@ func makeOp(client *aerospike.Client, op map[interface{}]interface{}) func() {
 		return makeScan(client, op)
 	case OPQUERY:
 		return makeQuery(client, op)
+	case OPEXEC_UDF:
+		return makeExecUDF(client, op)
 	}
 
 	return nil
@@ -61,7 +70,8 @@ func makeOp(client *aerospike.Client, op map[interface{}]interface{}) func() {
 func binBuilder(binDesc map[interface{}]interface{}) func() *aerospike.Bin {
 	name := readOption(binDesc, NAME, "").(string)
 	binType := readOption(binDesc, VALTYPE, nil).(string)
-	binRange := readOption(binDesc, VALRANGE, nil).([]interface{})
+	binRange := readOption(binDesc, VALRANGE, []interface{}{}).([]interface{})
+
 	if len(binRange) != 2 {
 		log.Fatalf("range values should be an array with exactly 2 elemets in `%v`", binDesc)
 	}
@@ -220,6 +230,7 @@ func makeScan(client *aerospike.Client, op map[interface{}]interface{}) func() {
 func makeQuery(client *aerospike.Client, op map[interface{}]interface{}) func() {
 	namespace := readOption(op, NAMESPACE, nil).(string)
 	set := readOption(op, SET, "").(string)
+	createIndex := readOption(op, CREATE_INDEX, false).(bool)
 
 	verify := readOption(op, VERIFY, false).(bool)
 	policy := aerospike.NewQueryPolicy()
@@ -227,14 +238,28 @@ func makeQuery(client *aerospike.Client, op map[interface{}]interface{}) func() 
 
 	statementDesc := op[STATEMENT].(map[interface{}]interface{})
 	statement := aerospike.NewStatement(namespace, set)
-	rangeFilter := readOption(statementDesc, FILTER_RANGE, []int{}).([]interface{})
+	rangeFilter := readOption(statementDesc, FILTER_RANGE, []interface{}{}).([]interface{})
 	binName := readOption(statementDesc, BIN_NAME, nil).(string)
 
 	if len(rangeFilter) == 2 {
 		statement.Addfilter(aerospike.NewRangeFilter(binName, int64(rangeFilter[0].(int)), int64(rangeFilter[1].(int))))
+
+		if createIndex {
+			client.CreateIndex(nil, namespace, set, set+binName, binName, aerospike.NUMERIC)
+		}
 	} else {
 		eqFilter := readOption(statementDesc, FILTER_EQ, nil)
 		statement.Addfilter(aerospike.NewEqualFilter(binName, eqFilter))
+
+		indexType := aerospike.NUMERIC
+		switch eqFilter.(type) {
+		case string:
+			indexType = aerospike.STRING
+		}
+
+		if createIndex {
+			client.CreateIndex(nil, namespace, set, set+binName, binName, indexType)
+		}
 	}
 
 	var origRec *aerospike.Record
@@ -265,6 +290,36 @@ func makeQuery(client *aerospike.Client, op map[interface{}]interface{}) func() 
 
 		for err := range queryResult.Errors {
 			atomicStat(OPQUERY, err)
+		}
+	}
+}
+
+func makeExecUDF(client *aerospike.Client, op map[interface{}]interface{}) func() {
+	packageName := readOption(op, PACKAGE_NAME, nil).(string)
+	funcName := readOption(op, FUNC_NAME, nil).(string)
+	args := readOption(op, ARGS, []interface{}{}).([]interface{})
+
+	namespace := readOption(op, NAMESPACE, nil).(string)
+	set := readOption(op, SET, "").(string)
+	keybuilder := keyBuilder(namespace, set, op[KEY].(map[interface{}]interface{}))
+
+	var err error
+	policy := aerospike.NewWritePolicy(0, 0)
+
+	parameters := []aerospike.Value{}
+	for param := range args {
+		parameters = append(parameters, aerospike.NewValue(param))
+	}
+
+	return func() {
+		// key will be nil if existing only is requested and there are
+		// no existing keys yet
+		if k := keybuilder(); k != nil {
+			_, err = client.Execute(policy, k, packageName, funcName, parameters...)
+			if err != nil {
+				log.Println(err.Error())
+			}
+			atomicStat(OPEXEC_UDF, err)
 		}
 	}
 }
@@ -304,4 +359,27 @@ func sameValue(v1, v2 aerospike.Value) bool {
 	}
 
 	return res
+}
+
+func createDefaultUDF(client *aerospike.Client) {
+	const udfBody = `function lgTestFunc1(rec, div, str)
+	   local ret = map()                     -- Initialize the return value (a map)
+
+	   local x = rec['bin2']                 -- Get the value from record bin named "bin1"
+
+	   rec['bin2'] = x               -- Set the value in record bin named "bin2"
+
+	   aerospike:update(rec)                 -- Update the main record
+
+	   ret['status'] = 'OK'                   -- Populate the return status
+	   ret['value'] = (0 / div)                   -- Populate the return status
+	   return ret                             -- Return the Return value and/or status
+	end`
+
+	regTask, err := client.RegisterUDF(nil, []byte(udfBody), "loadGenTest.lua", aerospike.LUA)
+	panicOnError(err)
+
+	// wait until UDF is created
+	err = <-regTask.OnComplete()
+	panicOnError(err)
 }

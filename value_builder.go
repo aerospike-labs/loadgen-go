@@ -73,8 +73,10 @@ func (r *ValueBuilder) ReadInt() interface{} {
 	var val int
 	if r.from == 0 {
 		val = r.rnd.Intn(r.to)
+	} else if r.from == r.to {
+		return r.from
 	} else {
-		val = r.rnd.Intn(r.from) + (r.to - r.from)
+		val = r.rnd.Intn(r.to-r.from) + r.from
 	}
 
 	return val

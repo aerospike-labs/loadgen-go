@@ -4,23 +4,16 @@ hosts:
     - host: 127.0.0.1
       port: 3000
 timeout: 50                           # in milliseconds
-key_count: 10000                       # number of keys to be generated
+key_count: 10000                      # number of keys to be generated
 operations:
   - optype: get
     namespace: test
     set: test2
-    verify: true
+    verify: true                      # when true, the value of bins in the record will be checked against internal values
     key:
       type: integer
-      range: [512, 1024]
+      range: [512, 1024]              # range of the key values; when type is string, it determines the length of the random string
       use_existing: true
-    bins: 
-      - name: bin1
-        type: integer
-        range: [512, 1024]
-      - name: bin2
-        type: integer
-        range: [0, 1024]
     load: 40
 
   - optype: get
@@ -30,14 +23,7 @@ operations:
     key: 
       type: integer
       range: [0, 1024]
-      use_existing: true
-    bins: 
-      - name: bin1
-        type: integer
-        range: [512, 1024]
-      - name: bin2
-        type: integer
-        range: [0, 1024]
+      use_existing: true              # use_existing determines if the key should be chosen from an already generated key, and not a random one
     load: 40
 
   - optype: put
@@ -49,10 +35,10 @@ operations:
     bins: 
       - name: bin1
         type: integer
-        range: [512, 1024]
+        range: [512, 1024]            # range of the key values; when type is string, it determines the length range of the random string
       - name: bin2
-        type: integer
-        range: [0, 1024]
+        type: string
+        range: [10, 10]
     load: 10
 
   - optype: delete
@@ -72,8 +58,10 @@ operations:
 
     statement: 
       bin_name: bin2
-      range: [0, 1024] # can be equal value
-    load: 8
+      range: [150, 160]
+      # equal: 150 
+      create_index: true
+    load: 4
 
   - optype: scan
     namespace: test
@@ -82,3 +70,15 @@ operations:
     percent: 10
     wait_for_migrations: false
     load: 1
+
+  - optype: exec_udf
+    namespace: test
+    set: test2
+    package: loadGenTest
+    function: lgTestFunc1
+    args: [1, "this string"]
+    key: 
+      type: integer
+      range: [512, 1024]
+      use_existing: true
+    load: 4

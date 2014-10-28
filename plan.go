@@ -115,6 +115,9 @@ func (lp *LoadPlan) interpretPlan() {
 	lp.client, err = aerospike.NewClientWithPolicyAndHost(policy, lp.seeds...)
 	panicOnError(err)
 
+	// create the default UDF for test
+	createDefaultUDF(lp.client)
+
 	log.Println("Nodes found: ", len(lp.client.GetNodeNames()))
 	for _, nodeName := range lp.client.GetNodeNames() {
 		log.Println(nodeName)
@@ -160,12 +163,13 @@ func (lp *LoadPlan) executePlan() {
 		haltChannels = append(haltChannels, hChan)
 
 		go func(hc chan bool) {
+			rnd := rand.New(rand.NewSource(time.Now().UnixNano()))
 			for {
 				select {
 				case <-hc:
 					return
 				default:
-					lp.loadGenerators[rand.Intn(100)]()
+					lp.loadGenerators[rnd.Intn(100)]()
 				}
 			}
 		}(hChan)
