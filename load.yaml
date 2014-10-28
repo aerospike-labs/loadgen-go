@@ -1,0 +1,84 @@
+# plan file
+
+hosts: 
+    - host: 127.0.0.1
+      port: 3000
+timeout: 50                           # in milliseconds
+key_count: 10000                       # number of keys to be generated
+operations:
+  - optype: get
+    namespace: test
+    set: test2
+    verify: true
+    key:
+      type: integer
+      range: [512, 1024]
+      use_existing: true
+    bins: 
+      - name: bin1
+        type: integer
+        range: [512, 1024]
+      - name: bin2
+        type: integer
+        range: [0, 1024]
+    load: 40
+
+  - optype: get
+    namespace: test
+    only_existing: true
+    set: test2
+    key: 
+      type: integer
+      range: [0, 1024]
+      use_existing: true
+    bins: 
+      - name: bin1
+        type: integer
+        range: [512, 1024]
+      - name: bin2
+        type: integer
+        range: [0, 1024]
+    load: 40
+
+  - optype: put
+    namespace: test
+    set: test2
+    key: 
+      type: integer
+      range: [0, 1024]
+    bins: 
+      - name: bin1
+        type: integer
+        range: [512, 1024]
+      - name: bin2
+        type: integer
+        range: [0, 1024]
+    load: 10
+
+  - optype: delete
+    namespace: test
+    set: test2
+    key: 
+      type: integer
+      range: [512, 1024]
+      use_existing: true
+    load: 1
+
+  - optype: query
+    namespace: test
+    set: test2
+    verify: true
+    wait_for_migrations: true
+
+    statement: 
+      bin_name: bin2
+      range: [0, 1024] # can be equal value
+    load: 8
+
+  - optype: scan
+    namespace: test
+    set: test2
+    verify: true
+    percent: 10
+    wait_for_migrations: false
+    load: 1
