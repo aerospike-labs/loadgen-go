@@ -9,42 +9,45 @@ import (
 )
 
 const (
-	OPERATIONS = "operations"
-	LOAD       = "load"
+	ID         = "Id"
+	OPERATIONS = "Operations"
+	LOAD       = "Load"
 
-	OPTYPE     = "optype"
-	OPGET      = "get"
-	OPPUT      = "put"
-	OPDELETE   = "delete"
-	OPSCAN     = "scan"
-	OPQUERY    = "query"
-	OPEXEC_UDF = "exec_udf"
+	OPTYPE     = "OpType"
+	OPGET      = "Get"
+	OPPUT      = "Put"
+	OPDELETE   = "Delete"
+	OPSCAN     = "Scan"
+	OPQUERY    = "Query"
+	OPEXEC_UDF = "ExecUDF"
 
-	NAMESPACE = "namespace"
-	SET       = "set"
+	NAMESPACE = "Namespace"
+	SET       = "Set"
 
-	KEY  = "key"
-	BINS = "bins"
-	NAME = "name"
+	KEY  = "Key"
+	BINS = "Bins"
+	NAME = "Name"
 
-	USE_EXISTING        = "use_existing"
-	VERIFY              = "verify"
-	PERCENT             = "percent"
-	WAIT_FOR_MIGRATIONS = "wait_for_migrations"
+	USE_EXISTING        = "UseExisting"
+	VERIFY              = "Verify"
+	PERCENT             = "Percent"
+	WAIT_FOR_MIGRATIONS = "WaitForMigrations"
 
-	VALTYPE  = "type"
-	VALRANGE = "range"
-	VALCONST = "val"
+	VALTYPE = "Type"
+	// VALRANGE = "range"
+	VALMIN   = "Min"
+	VALMAX   = "Max"
+	VALCONST = "Val"
 
-	STATEMENT    = "statement"
-	FILTER_EQ    = "equal"
-	FILTER_RANGE = "range"
-	BIN_NAME     = "bin_name"
-	CREATE_INDEX = "create_index"
+	STATEMENT    = "Statement"
+	FILTER_EQ    = "Equal"
+	FILTER_RANGE = "Range"
+	BIN_NAME     = "BinName"
+	CREATE_INDEX = "CreateIndex"
 
-	PACKAGE_NAME = "package"
-	FUNC_NAME    = "function"
-	ARGS         = "args"
+	PACKAGE_NAME = "Package"
+	FUNC_NAME    = "Function"
+	ARGS         = "Args"
 )
 
 func makeOp(client *aerospike.Client, op map[interface{}]interface{}) func() {
@@ -70,12 +73,10 @@ func makeOp(client *aerospike.Client, op map[interface{}]interface{}) func() {
 func binBuilder(binDesc map[interface{}]interface{}) func() *aerospike.Bin {
 	name := readOption(binDesc, NAME, "").(string)
 	binType := readOption(binDesc, VALTYPE, nil).(string)
-	binRange := readOption(binDesc, VALRANGE, []interface{}{}).([]interface{})
+	binMin := readOption(binDesc, VALMIN, nil).(int)
+	binMax := readOption(binDesc, VALMAX, nil).(int)
 
-	if len(binRange) != 2 {
-		log.Fatalf("range values should be an array with exactly 2 elemets in `%v`", binDesc)
-	}
-	valueBuilder := NewValueBuilder(binType, binRange[0].(int), binRange[1].(int))
+	valueBuilder := NewValueBuilder(binType, binMin, binMax)
 
 	return func() *aerospike.Bin {
 		return aerospike.NewBin(name, valueBuilder())
@@ -84,8 +85,9 @@ func binBuilder(binDesc map[interface{}]interface{}) func() *aerospike.Bin {
 
 func keyBuilder(ns, set string, keyDesc map[interface{}]interface{}) func() *aerospike.Key {
 	keyType := keyDesc[VALTYPE].(string)
-	keyRange := keyDesc[VALRANGE].([]interface{})
-	valueBuilder := NewValueBuilder(keyType, keyRange[0].(int), keyRange[1].(int))
+	keyMin := readOption(keyDesc, VALMIN, nil).(int)
+	keyMax := readOption(keyDesc, VALMAX, nil).(int)
+	valueBuilder := NewValueBuilder(keyType, keyMin, keyMax)
 
 	use_existing := readOption(keyDesc, USE_EXISTING, false).(bool)
 	var key *aerospike.Key

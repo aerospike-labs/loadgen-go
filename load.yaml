@@ -1,84 +1,109 @@
 # plan file
+Hosts: 
+    - Host: 127.0.0.1
+      Port: 3000
+Timeout: 50                           # in milliseconds
+Keys: 1000000                         # number of keys to be generated
 
-hosts: 
-    - host: 127.0.0.1
-      port: 3000
-timeout: 50                           # in milliseconds
-key_count: 10000                      # number of keys to be generated
-operations:
-  - optype: get
-    namespace: test
-    set: test2
-    verify: true                      # when true, the value of bins in the record will be checked against internal values
-    key:
-      type: integer
-      range: [512, 1024]              # range of the key values; when type is string, it determines the length of the random string
-      use_existing: true
-    load: 40
+Operations:
+  - Id: r1
+    OpType: Get
+    Namespace: test
+    Set: testset
+    Verify: true                      # when true, the value of bins in the record will be checked against internal values
+    Key:
+      Type: Integer
+      Min: 512
+      Max: 1024              # range of the key values; when type is string, it determines the length of the random string
+      UseExisting: true
 
-  - optype: get
-    namespace: test
-    only_existing: true
-    set: test2
-    key: 
-      type: integer
-      range: [0, 1024]
-      use_existing: true              # use_existing determines if the key should be chosen from an already generated key, and not a random one
-    load: 40
+  - Id: r2
+    OpType: Get
+    Namespace: test
+    OnlyExisting: true
+    Set: testset
+    Key: 
+      Type: Integer
+      Min: 0
+      Max: 1024
+      UseExisting: true              # use_existing determines if the key should be chosen from an already generated key, and not a random one
 
-  - optype: put
-    namespace: test
-    set: test2
-    key: 
-      type: integer
-      range: [0, 1024]
-    bins: 
-      - name: bin1
-        type: integer
-        range: [512, 1024]            # range of the key values; when type is string, it determines the length range of the random string
-      - name: bin2
-        type: string
-        range: [10, 10]
-    load: 10
+  - Id: w1
+    OpType: Put
+    Namespace: test
+    Set: testset
+    Key: 
+      Type: Integer
+      Min: 0
+      Max: 1024
+    Bins: 
+      - Name: bin1
+        Type: Integer
+        Min: 512
+        Max: 1024            # range of the key values; when type is string, it determines the length range of the random string
+      - Name: bin2
+        Type: String
+        Min: 10
+        Max: 10
 
-  - optype: delete
-    namespace: test
-    set: test2
-    key: 
-      type: integer
-      range: [512, 1024]
-      use_existing: true
-    load: 1
+  - Id: d1
+    OpType: Delete
+    Namespace: test
+    Set: testset
+    Key: 
+      Type: Integer
+      Min: 512
+      Max: 1024
+      UseExisting: true
 
-  - optype: query
-    namespace: test
-    set: test2
-    verify: true
-    wait_for_migrations: true
+  - Id: q1
+    OpType: Query
+    Namespace: test
+    Set: testset
+    Verify: true
+    WaitForMigrations: true
 
-    statement: 
-      bin_name: bin2
-      range: [150, 160]
-      # equal: 150 
-      create_index: true
-    load: 4
+    Statement: 
+      BinName: bin2
+      Range: [150, 160]
+      # Equal: 150 
+      CreateIndex: true
 
-  - optype: scan
-    namespace: test
-    set: test2
-    verify: true
-    percent: 10
-    wait_for_migrations: false
-    load: 1
+  - Id: s1
+    OpType: Scan
+    Namespace: test
+    Set: testset
+    Verify: false
+    Percent: 100
+    WaitForMigrations: false
 
-  - optype: exec_udf
-    namespace: test
-    set: test2
-    package: loadGenTest
-    function: lgTestFunc1
-    args: [1, "this string"]
-    key: 
-      type: integer
-      range: [512, 1024]
-      use_existing: true
-    load: 4
+  - Id: u1
+    OpType: ExecUDF
+    Namespace: test
+    Set: testset
+    Package: loadGenTest
+    Function: lgTestFunc1
+    Args: [1, "this string"]
+    Key: 
+      Type: Integer
+      Min: 512
+      Max: 1024
+      UseExisting: true
+
+Load:
+  - Id: w50-r50
+    r1: 50%
+    w1: 50%
+
+  - Id: r50-w40-d10
+    r1: 50%
+    w1: 40%
+    d1: 10%
+
+  - Id: r95-q5
+    r1: 95%
+    q1: 5%
+
+  - Id: r95-w5
+    r1: 95%
+    w1: 5%

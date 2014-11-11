@@ -4,7 +4,10 @@ import (
 	"io/ioutil"
 	"log"
 	"math/rand"
+	"regexp"
 	"runtime"
+	"strconv"
+	"strings"
 	"sync"
 	"time"
 
@@ -20,6 +23,7 @@ type LoadPlan struct {
 	filename string
 
 	chanHalt       chan bool
+	operations     map[string]func()
 	loadGenerators []func()
 
 	client *aerospike.Client
@@ -29,6 +33,7 @@ func NewLoadPlan(filename string) *LoadPlan {
 	return &LoadPlan{
 		filename:       filename,
 		loadGenerators: make([]func(), 100),
+		operations:     map[string]func(){},
 		chanHalt:       make(chan bool),
 	}
 }
@@ -87,11 +92,11 @@ func (lp *LoadPlan) readPlanFile() {
 }
 
 const (
-	TIMEOUT  = "timeout"
-	KEYCOUNT = "key_count"
-	HOSTS    = "hosts"
-	HOST     = "host"
-	PORT     = "port"
+	TIMEOUT  = "Timeout"
+	KEYCOUNT = "KeyCount"
+	HOSTS    = "Hosts"
+	HOST     = "Host"
+	PORT     = "Port"
 )
 
 func (lp *LoadPlan) interpretPlan() {
@@ -125,28 +130,80 @@ func (lp *LoadPlan) interpretPlan() {
 
 	// verify plans
 	operations := lp.plan[OPERATIONS].([]interface{})
-	loadTotal := 0
-	for _, op := range operations {
-		loadTotal += op.(map[interface{}]interface{})[LOAD].(int)
-	}
-	if loadTotal != 100 {
-		log.Fatal("Total load for operations should equal to exactly 100%")
-	}
 
 	// create the plans
-	offset := 0
 	for _, opDesc := range operations {
 		op := opDesc.(map[interface{}]interface{})
-		load := op[LOAD].(int)
+		opId := op[ID].(string)
+		lp.operations[opId] = makeOp(lp.client, op)
+	}
+
+	// setup load
+	loadPlans := lp.plan[LOAD].([]interface{})
+	var loadPlan map[interface{}]interface{}
+	for _, p := range loadPlans {
+		lPlan := p.(map[interface{}]interface{})
+		id := lPlan[ID].(string)
+		if id == *loadId {
+			loadPlan = lPlan
+			delete(loadPlan, ID)
+			break
+		}
+	}
+
+	if loadPlan == nil {
+		log.Fatalf("Load `%s` not found in defined operations.", *loadId)
+	}
+
+	// find the load plan that is requested
+	loadTotal := 0
+	offset := 0
+	for opId, pct := range loadPlan {
+		if lp.operations[opId.(string)] == nil {
+			log.Fatalf("Plan `%s` not found in defined operations.", opId)
+		}
+
+		load := readPercent(pct)
+		loadTotal += load
+		if loadTotal > 100 {
+			log.Fatal("Total load for operations should equal to exactly 100%")
+		}
+
 		for i := 0; i < load; i++ {
-			lp.loadGenerators[offset] = makeOp(lp.client, op)
+			lp.loadGenerators[offset] = lp.operations[opId.(string)]
 			offset++
 		}
 	}
 
+	if loadTotal != 100 {
+		log.Fatal("Total load for operations should equal to exactly 100%")
+	}
+
 	// reset map
-	keyCount := readOption(lp.plan, KEYCOUNT, 1000000).(int)
-	keySet = NewKeySet(keyCount)
+	keySet = NewKeySet(*keyCount)
+}
+
+func readPercent(pct interface{}) int {
+	switch pct.(type) {
+	case string:
+
+		re := regexp.MustCompile(`(\d{1,3})\%?`)
+		values := re.FindStringSubmatch(pct.(string))
+
+		// see if the value is supplied
+		if len(values) == 2 && strings.Trim(values[1], " ") != "" {
+			if value, err := strconv.Atoi(strings.Trim(values[1], " ")); err == nil && value >= 0 && value <= 100 {
+				return value
+			}
+		}
+
+	case int:
+		if pct.(int) >= 0 && pct.(int) <= 100 {
+			return pct.(int)
+		}
+	}
+	log.Fatalf("`%v` is not a valid percent value.", pct)
+	return 0
 }
 
 func (lp *LoadPlan) stopPlan() {

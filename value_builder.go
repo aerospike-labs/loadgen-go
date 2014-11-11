@@ -9,9 +9,9 @@ import (
 )
 
 const (
-	TINT    = "integer"
-	TSTRING = "string"
-	TBYTES  = "bytes"
+	TINT    = "Integer"
+	TSTRING = "String"
+	TBYTES  = "Bytes"
 )
 
 // Randbo creates a stream of non-crypto quality random bytes
@@ -76,7 +76,7 @@ func (r *ValueBuilder) ReadInt() interface{} {
 	} else if r.from == r.to {
 		return r.from
 	} else {
-		val = r.rnd.Intn(r.to-r.from) + r.from
+		val = r.rnd.Intn(r.to-r.from+1) + r.from
 	}
 
 	return val

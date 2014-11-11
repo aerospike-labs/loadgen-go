@@ -62,12 +62,12 @@ func atomicStat(op string, err error) {
 	}
 }
 
-func statsService() {
+func statsService(interval time.Duration) {
 	logs := make([]*StatsLog, 6)
 	logStr := bytes.NewBuffer(nil)
 	for {
 		select {
-		case <-time.After(time.Second):
+		case <-time.After(interval):
 			logs[0] = atomicLog(OPGET)
 			logs[1] = atomicLog(OPPUT)
 			logs[2] = atomicLog(OPDELETE)
