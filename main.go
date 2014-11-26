@@ -54,7 +54,7 @@ func main() {
 		daemon.AddCommand(daemon.StringFlag(signal, "quit"), syscall.SIGQUIT, termHandler)
 		daemon.AddCommand(daemon.StringFlag(signal, "stop"), syscall.SIGTERM, termHandler)
 		daemon.AddCommand(daemon.StringFlag(signal, "reload"), syscall.SIGHUP, reloadHandler)
-		daemon.AddCommand(daemon.StringFlag(signal, "status"), syscall.SIGINFO, statusHandler)
+		// daemon.AddCommand(daemon.StringFlag(signal, "status"), syscall.SIGINFO, statusHandler)
 
 		log.SetOutput(ioutil.Discard)
 		cntxt := &daemon.Context{
