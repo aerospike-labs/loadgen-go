@@ -1,0 +1,109 @@
+
+# -----------------------------------------------------------------------------
+# Data Model
+#
+# Defines one or many data models, which can be references by different loads
+# Each data model describes the key and the bins for each record
+# -----------------------------------------------------------------------------
+Data:
+
+  - Id: default
+    Keys:
+      Namespace: test
+      Set: foo
+      Key:
+        String:
+          Min: 20
+          Max: 256
+    Bins:
+      - Name: a
+        Value:
+          Integer:
+            Min: 1
+            Max: 1000000
+        Indexed: true
+      - Name: b
+        Value:
+          String:
+            Min: 20
+            Max: 256
+            Charset: NUMERIC
+      - Name: c
+        Value:
+          List:
+            Min: 1
+            Max: 256
+            Value:
+              String:
+                Min: 8
+                Max: 8
+                Charset: ASCII
+      # - Name: e
+      #   Value:
+      #     Map:
+      #       Min: 1
+      #       Max: 256
+      #       Value:
+      #         Integer:
+      #           Min: 8
+      #           Max: 8
+      #           Charset: ASCII
+
+
+# -----------------------------------------------------------------------------
+# Load Model
+#
+# Defines one or many load models, which can be executed
+# Each load model describes the which data model should be used, and the work
+# balance.
+# -----------------------------------------------------------------------------
+Load:
+
+  - Id: default
+    Keys: 1000000   # 1M Keys
+    Writes: 100     # 100% Writes
+
+  - Id: w100
+    Writes: 100     # 100% Writes
+
+  - Id: r100
+    Reads: 100      # 100% Reads
+
+  - Id: r50-w50
+    Reads: 50       # 50% Reads
+    Writes: 50      # 50% Writes
+
+  - Id: r30-w70
+    Reads: 30       # 30% Reads
+    Writes: 70      # 70% Writes
+
+  - Id: r70-w30
+    Reads: 70       # 70% Reads
+    Writes: 30      # 30% Writes
+
+  - Id: r50-w40-q10
+    Reads: 50       # 50% Reads
+    Writes: 40      # 40% Writes
+    Queries: 10     # 10% Queries
+
+
+# -----------------------------------------------------------------------------
+# Run Spec
+#
+# Each entry specifies the data model and the load model to be used in running.
+# The Objects fiels is optional, and specifies how many objects should be 
+# used. If not specified, an unlimited number of objects will be used.
+# -----------------------------------------------------------------------------
+Run:
+
+  - Load: w100      # Load Model
+    Data: foo       # Data Model
+
+  - Load: w100      # Load Model
+    Data: bar       # Data Model
+    Objects: 1M     # Number of Objects
+
+  - Load: r50-w50   # Load Model
+    Data: bar       # Data Model
+    Objects: 1M     # Number of Objects
+

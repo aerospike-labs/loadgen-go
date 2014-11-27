@@ -139,48 +139,48 @@ func (lp *LoadPlan) interpretPlan() {
 	}
 
 	// setup load
-	loadPlans := lp.plan[LOAD].([]interface{})
-	var loadPlan map[interface{}]interface{}
-	for _, p := range loadPlans {
-		lPlan := p.(map[interface{}]interface{})
-		id := lPlan[ID].(string)
-		if id == *loadId {
-			loadPlan = lPlan
-			delete(loadPlan, ID)
-			break
-		}
-	}
+	// loadPlans := lp.plan[LOAD].([]interface{})
+	// var loadPlan map[interface{}]interface{}
+	// for _, p := range loadPlans {
+	// 	lPlan := p.(map[interface{}]interface{})
+	// 	id := lPlan[ID].(string)
+	// 	if id == *loadId {
+	// 		loadPlan = lPlan
+	// 		delete(loadPlan, ID)
+	// 		break
+	// 	}
+	// }
 
-	if loadPlan == nil {
-		log.Fatalf("Load `%s` not found in defined operations.", *loadId)
-	}
+	// if loadPlan == nil {
+	// 	log.Fatalf("Load `%s` not found in defined operations.", *loadId)
+	// }
 
 	// find the load plan that is requested
-	loadTotal := 0
-	offset := 0
-	for opId, pct := range loadPlan {
-		if lp.operations[opId.(string)] == nil {
-			log.Fatalf("Plan `%s` not found in defined operations.", opId)
-		}
+	// loadTotal := 0
+	// offset := 0
+	// for opId, pct := range loadPlan {
+	// 	if lp.operations[opId.(string)] == nil {
+	// 		log.Fatalf("Plan `%s` not found in defined operations.", opId)
+	// 	}
 
-		load := readPercent(pct)
-		loadTotal += load
-		if loadTotal > 100 {
-			log.Fatal("Total load for operations should equal to exactly 100%")
-		}
+	// 	load := readPercent(pct)
+	// 	loadTotal += load
+	// 	if loadTotal > 100 {
+	// 		log.Fatal("Total load for operations should equal to exactly 100%")
+	// 	}
 
-		for i := 0; i < load; i++ {
-			lp.loadGenerators[offset] = lp.operations[opId.(string)]
-			offset++
-		}
-	}
+	// 	for i := 0; i < load; i++ {
+	// 		lp.loadGenerators[offset] = lp.operations[opId.(string)]
+	// 		offset++
+	// 	}
+	// }
 
-	if loadTotal != 100 {
-		log.Fatal("Total load for operations should equal to exactly 100%")
-	}
+	// if loadTotal != 100 {
+	// 	log.Fatal("Total load for operations should equal to exactly 100%")
+	// }
 
 	// reset map
-	keySet = NewKeySet(*keyCount)
+	keySet = NewKeySet(1)
 }
 
 func readPercent(pct interface{}) int {
