@@ -12,7 +12,7 @@ type ReadOp struct {
 
 type WriteOp struct {
 	key  *as.Key
-	bins []as.Bin
+	bins []*as.Bin
 }
 
 // type DeleteOp struct {
@@ -69,31 +69,45 @@ func NewLoadGenerator(model *LoadModel, keys KeyGenerator, records RecordGenerat
 
 func (g *LoadGenerator) generateReads() {
 	for {
-		s := atomic.LoadUint32(&g.State)
-		if s == 1 {
-			return
-		}
-
 		k := g.Keys.GenerateKey()
-		_, err := g.Client.Get(nil, k)
-		if err != nil {
-			logError("%v", err.Error())
+		o := &ReadOp{key: k}
+		g.Channels.Reads <- o
+	}
+}
+
+func (g *LoadGenerator) executeReads() {
+	for {
+		select {
+		case o := <-g.Channels.Reads:
+			_, err := g.Client.Get(nil, o.key, o.bins...)
+			if err != nil {
+				logError("%v", err.Error())
+			} else {
+				logInfo("get")
+			}
 		}
 	}
 }
 
 func (g *LoadGenerator) generateWrites() {
 	for {
-		s := atomic.LoadUint32(&g.State)
-		if s == 1 {
-			return
-		}
-
 		k := g.Keys.GenerateKey()
-		r := g.Records.GenerateRecord()
-		err := g.Client.PutBins(nil, k, r...)
-		if err != nil {
-			logError("%v", err.Error())
+		b := g.Records.GenerateRecord()
+		o := &WriteOp{key: k, bins: b}
+		g.Channels.Writes <- o
+	}
+}
+
+func (g *LoadGenerator) executeWrites() {
+	for {
+		select {
+		case o := <-g.Channels.Writes:
+			err := g.Client.PutBins(nil, o.key, o.bins...)
+			if err != nil {
+				logError("%v", err.Error())
+			} else {
+				logInfo("put")
+			}
 		}
 	}
 }
@@ -103,13 +117,16 @@ func (g *LoadGenerator) Start() {
 
 	// reads
 	for i = 0; i < g.Model.Reads; i++ {
-		go g.generateReads()
+		go g.executeReads()
 	}
 
 	// writes
 	for i = 0; i < g.Model.Writes; i++ {
-		go g.generateWrites()
+		go g.executeWrites()
 	}
+
+	go g.generateReads()
+	go g.generateReads()
 }
 
 func (g *LoadGenerator) Stop() {
