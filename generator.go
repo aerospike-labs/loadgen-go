@@ -1,53 +1,58 @@
 package main
 
 import (
-	"fmt"
+	// "fmt"
 	as "github.com/aerospike/aerospike-client-go"
-	"math"
+	// "math"
 	"math/rand"
+	"time"
 )
 
 var (
-	GENERATOR_RAND          = rand.New(rand.NewSource(math.MaxInt64))
+	RANDOM                  = rand.New(rand.NewSource(time.Now().UnixNano()))
 	GENERATOR_CHARSET_ALPHA = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
-func randomIn(min int, max int) int {
-	i := GENERATOR_RAND.Intn(min + max + 1)
-	if i > min {
-		return i - min
+func randomInRange(min int64, max int64) int64 {
+	if min == max {
+		return min
+	} else if min < max {
+		var i int64 = 0
+		for i = RANDOM.Int63n(max); i < min; i = RANDOM.Int63n(max) {
+		}
+		return i
 	}
-	return i
+	return max
 }
 
-func GenerateInteger(c *IntegerConstraints) int {
-	return randomIn(int(c.Min), int(c.Max))
+func GenerateInteger(c *IntegerConstraints) int64 {
+	return randomInRange(c.Min, c.Max)
 }
 
-func generateString(min int, max int) string {
-	n := randomIn(min, max)
+func generateString(min int64, max int64) string {
+	n := randomInRange(min, max)
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = GENERATOR_CHARSET_ALPHA[GENERATOR_RAND.Intn(len(GENERATOR_CHARSET_ALPHA))]
+		b[i] = GENERATOR_CHARSET_ALPHA[RANDOM.Intn(len(GENERATOR_CHARSET_ALPHA))]
 	}
 	return string(b)
 }
 
 func GenerateString(c *StringConstraints) string {
-	return generateString(int(c.Min), int(c.Max))
+	return generateString(c.Min, c.Max)
 }
 
 func GenerateBytes(c *BytesConstraints) []byte {
-	n := randomIn(int(c.Min), int(c.Max))
+	n := randomInRange(c.Min, c.Max)
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = byte(GENERATOR_RAND.Intn(256))
+		b[i] = byte(RANDOM.Intn(256))
 	}
 	return b
 }
 
 func GenerateList(c *ListConstraints) []interface{} {
-	n := randomIn(int(c.Min), int(c.Max))
+	n := randomInRange(c.Min, c.Max)
 	l := make([]interface{}, n)
 	for i := range l {
 		v := GenerateValue(&c.Value)
@@ -57,10 +62,10 @@ func GenerateList(c *ListConstraints) []interface{} {
 }
 
 func GenerateMap(c *MapConstraints) map[string]interface{} {
-	n := randomIn(int(c.Min), int(c.Max))
+	n := randomInRange(c.Min, c.Max)
 	m := make(map[string]interface{}, n)
 	for _ = range m {
-		k := generateString(int(c.Min), int(c.Max))
+		k := generateString(c.Min, c.Max)
 		v := GenerateValue(&c.Value)
 		m[k] = v
 	}
@@ -68,7 +73,6 @@ func GenerateMap(c *MapConstraints) map[string]interface{} {
 }
 
 func GenerateValue(c *Constraints) interface{} {
-	fmt.Printf("c := %#v\n", c)
 	if c.Integer != nil {
 		return GenerateInteger(c.Integer)
 	} else if c.String != nil {
@@ -84,11 +88,11 @@ func GenerateValue(c *Constraints) interface{} {
 }
 
 func GenerateBin(c *BinConstraints) *as.Bin {
-	fmt.Printf("c := %s\n", c.Name)
-	return as.NewBin(c.Name, GenerateValue(&c.Value))
+	b := as.NewBin(c.Name, GenerateValue(&c.Value))
+	return b
 }
 
-func GenerateRecord(l BinConstraintsList) []as.Bin {
+func GenerateBins(l BinConstraintsList) []as.Bin {
 	bins := make([]as.Bin, len(l))
 	for i, c := range l {
 		bin := GenerateBin(c)

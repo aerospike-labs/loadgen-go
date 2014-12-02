@@ -22,29 +22,29 @@ var (
 )
 
 type IntegerConstraints struct {
-	Min uint `Min`
-	Max uint `Max`
+	Min int64 `Min`
+	Max int64 `Max`
 }
 
 type StringConstraints struct {
-	Min int `Min`
-	Max int `Max`
+	Min int64 `Min`
+	Max int64 `Max`
 }
 
 type BytesConstraints struct {
-	Min uint `Min`
-	Max uint `Max`
+	Min int64 `Min`
+	Max int64 `Max`
 }
 
 type ListConstraints struct {
-	Min   uint        `Min`
-	Max   uint        `Max`
+	Min   int64       `Min`
+	Max   int64       `Max`
 	Value Constraints `Value`
 }
 
 type MapConstraints struct {
-	Min   uint        `Min`
-	Max   uint        `Max`
+	Min   int64       `Min`
+	Max   int64       `Max`
 	Key   Constraints `json:"Key,omitempty" yaml:"Key,omitempty"`
 	Value Constraints `json:"Value,omitempty" yaml:"Value,omitempty"`
 }
@@ -82,12 +82,12 @@ type DataModelList []*DataModel
 
 type LoadModel struct {
 	Id      string `Id`
-	Keys    uint   `Keys`
-	Reads   uint   `Reads`
-	Writes  uint   `Writes`
-	Deletes uint   `Deletes`
-	Queries uint   `Queries`
-	Scans   uint   `Scans`
+	Keys    int64  `Keys`
+	Reads   int64  `Reads`
+	Writes  int64  `Writes`
+	Deletes int64  `Deletes`
+	Queries int64  `Queries`
+	Scans   int64  `Scans`
 }
 
 type LoadModelList []*LoadModel

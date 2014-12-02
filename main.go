@@ -2,14 +2,16 @@ package main
 
 import (
 	"flag"
-	"fmt"
+	// "fmt"
 	// "io/ioutil"
 	"log"
 	"os"
 	"runtime"
+	// "strings"
 	"syscall"
 	"time"
 
+	as "github.com/aerospike/aerospike-client-go"
 	daemon "github.com/sevlyar/go-daemon"
 )
 
@@ -25,15 +27,7 @@ var (
 	logInterval time.Duration = time.Second
 )
 
-func panicOnError(err error) {
-	if err != nil {
-		log.Fatal(err)
-	}
-}
-
 func main() {
-
-	// var err error
 
 	// parse arguments
 	flag.StringVar(&pidFile, "pid", pidFile, "Path to PID file.")
@@ -66,29 +60,32 @@ func main() {
 	// thread:core parity
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// run stats service
-	go statsService(logInterval)
-
+	// load models
 	models := NewModels()
 	models.Load(modelsFile)
 
-	bins := GenerateRecord(models.DataModels[0].Bins)
-	fmt.Printf("bins := %#v\n", bins)
+	// Aerospike Client
+	client, err := as.NewClient(addr, port)
+	if err != nil {
+		// panicOnError(err)
+	}
 
-	// fmt.Printf("models := %#v\n", models)
+	// set up key and record generators
+	keys := NewPooledKeyGenerator(models.LoadModels[0], models.DataModels[0])
+	recs := NewPooledRecordGenerator(models.LoadModels[0], models.DataModels[0])
+	load := NewLoadGenerator(models.LoadModels[0], keys, recs, client)
 
-	// lp := NewLoadPlan(*filename)
+	load.Start()
+	// defer load.Stop()
 
-	// if *signal != "" {
-	// 	go lp.Watch()
-	// 	err = daemon.ServeSignals()
-	// 	if err != nil {
-	// 		log.Println("Error:", err)
-	// 	}
-	// 	log.Println("daemon terminated")
-	// } else {
-	// 	lp.Watch()
-	// }
+	load.Wait()
+
+}
+
+func panicOnError(err error) {
+	if err != nil {
+		log.Fatal(err)
+	}
 }
 
 func termHandler(sig os.Signal) error {
