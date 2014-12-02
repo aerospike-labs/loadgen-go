@@ -18,7 +18,7 @@ import (
 var (
 	spec                      = map[string]interface{}{}
 	addr        string        = "0.0.0.0"
-	port        int           = 9000
+	port        int           = 3000
 	pidFile     string        = "loadgen.pid"
 	logFile     string        = "loadgen.log"
 	modelsFile  string        = "models.yml"
@@ -57,7 +57,7 @@ func main() {
 		log.SetOutput(f)
 	}
 
-	// thread:core parity
+	// utlize full cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// load models
@@ -66,9 +66,7 @@ func main() {
 
 	// Aerospike Client
 	client, err := as.NewClient(addr, port)
-	if err != nil {
-		// panicOnError(err)
-	}
+	panicOnError(err)
 
 	// set up key and record generators
 	keys := NewPooledKeyGenerator(models.LoadModels[0], models.DataModels[0])
@@ -76,7 +74,7 @@ func main() {
 	load := NewLoadGenerator(models.LoadModels[0], keys, recs, client)
 
 	load.Start()
-	// defer load.Stop()
+	defer load.Stop()
 
 	load.Wait()
 
@@ -84,20 +82,20 @@ func main() {
 
 func panicOnError(err error) {
 	if err != nil {
-		log.Fatal(err)
+		logError("%v", err)
 	}
 }
 
 func termHandler(sig os.Signal) error {
-	log.Println("terminating...")
+	logInfo("terminating...")
 	return daemon.ErrStop
 }
 func reloadHandler(sig os.Signal) error {
-	log.Println("configuration reloaded")
+	logInfo("configuration reloaded")
 	return nil
 }
 
 func statusHandler(sig os.Signal) error {
-	println("Up and running")
+	logInfo("Up and running")
 	return nil
 }

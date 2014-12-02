@@ -39,7 +39,7 @@ func (g *PooledKeyGenerator) generate() {
 }
 
 func (g *PooledKeyGenerator) GenerateKey() *as.Key {
-	n := int64(atomic.LoadInt64(&g.Size))
+	n := atomic.LoadInt64(&g.Size)
 	if n > 0 {
 		i := RANDOM.Int63n(n)
 		return g.Keys[i]

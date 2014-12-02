@@ -74,8 +74,9 @@ Data:
 Load:
 
   - Id: default
-    Keys: 10   # 1M Keys
-    Writes: 100     # 100% Writes
+    Keys: 10        # 10 Keys
+    Reads: 100       # 10 concurrent reads
+    Writes: 100      # 10 concurrent writes
 
   - Id: w100
     Writes: 100     # 100% Writes

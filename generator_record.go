@@ -6,13 +6,13 @@ import (
 )
 
 type RecordGenerator interface {
-	GenerateRecord() []as.Bin
+	GenerateRecord() []*as.Bin
 }
 
 type PooledRecordGenerator struct {
 	Size     int64
 	Capacity int64
-	Records  [][]as.Bin
+	Records  [][]*as.Bin
 	Load     *LoadModel
 	Data     *DataModel
 }
@@ -22,7 +22,7 @@ func NewPooledRecordGenerator(load *LoadModel, data *DataModel) *PooledRecordGen
 	g := &PooledRecordGenerator{
 		Size:     0,
 		Capacity: n,
-		Records:  make([][]as.Bin, n),
+		Records:  make([][]*as.Bin, n),
 		Load:     load,
 		Data:     data,
 	}
@@ -38,7 +38,7 @@ func (g *PooledRecordGenerator) generate() {
 	}
 }
 
-func (g *PooledRecordGenerator) GenerateRecord() []as.Bin {
+func (g *PooledRecordGenerator) GenerateRecord() []*as.Bin {
 	n := atomic.LoadInt64(&g.Size)
 	if n > 0 {
 		i := RANDOM.Int63n(n)
