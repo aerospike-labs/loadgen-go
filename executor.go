@@ -61,7 +61,7 @@ func (e *Executor) Run() {
 
 	nops := e.initialize()
 	ncpu := int64(runtime.NumCPU())
-	nthr := nops * ncpu
+	nthr := nops
 
 	// run load generators
 	haltChannels := []chan bool{}
