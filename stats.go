@@ -56,17 +56,17 @@ func statLog(n string, s *Stat, p *Stat) string {
 	st := atomic.LoadUint64(&s.Timeouts)
 	se := atomic.LoadUint64(&s.Errors)
 
-	pc := atomic.LoadUint64(&p.Count)
-	pt := atomic.LoadUint64(&p.Timeouts)
-	pe := atomic.LoadUint64(&p.Errors)
+	pc := p.Count
+	pt := p.Timeouts
+	pe := p.Errors
 
 	dc := sc - pc
 	dt := st - pt
 	de := se - pe
 
-	atomic.StoreUint64(&p.Count, sc)
-	atomic.StoreUint64(&p.Timeouts, st)
-	atomic.StoreUint64(&p.Errors, se)
+	p.Count = sc
+	p.Timeouts = st
+	p.Errors = se
 
 	return fmt.Sprintf("{%s: count=%d/%d, timeouts=%d/%d, errors=%d/%d} ", n, dc, sc, dt, st, de, se)
 }

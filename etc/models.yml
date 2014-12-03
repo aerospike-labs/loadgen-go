@@ -38,31 +38,6 @@ Data:
                 Min: 8
                 Max: 8
                 Charset: ASCII
-      # - Name: d
-      #   Value:
-      #     List:
-      #       Min: 1
-      #       Max: 256
-      #       Value:
-      #         List:
-      #           Min: 1
-      #           Max: 256
-      #           Value:
-      #             String:
-      #               Min: 8
-      #               Max: 8
-      #               Charset: ASCII
-      # - Name: e
-      #   Value:
-      #     Map:
-      #       Min: 1
-      #       Max: 256
-      #       Value:
-      #         Integer:
-      #           Min: 8
-      #           Max: 8
-      #           Charset: ASCII
-
 
 # -----------------------------------------------------------------------------
 # Load Model
