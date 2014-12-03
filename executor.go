@@ -1,7 +1,6 @@
 package main
 
 import (
-	"log"
 	"math/rand"
 	"runtime"
 	"time"
@@ -30,7 +29,7 @@ func NewExecutor(client *aerospike.Client, load *LoadModel, keys KeyGenerator, r
 	}
 }
 
-func (e *Executor) initialize() {
+func (e *Executor) initialize() int64 {
 
 	var i int64 = 0
 	var o int64 = 0
@@ -49,21 +48,26 @@ func (e *Executor) initialize() {
 		o += i
 	}
 
+	return o
 }
 
 func (e *Executor) Stop() {
 	e.halt <- true
 	<-e.halt
+	logInfo("Executor stopped.")
 }
 
 func (e *Executor) Run() {
 
-	e.initialize()
+	nops := e.initialize()
+	ncpu := int64(runtime.NumCPU())
+	nthr := nops * ncpu
 
 	// run load generators
 	haltChannels := []chan bool{}
 
-	for i := 0; i < runtime.NumCPU()*32; i++ {
+	var i int64
+	for i = 0; i < nthr; i++ {
 		hChan := make(chan bool)
 		haltChannels = append(haltChannels, hChan)
 
@@ -81,7 +85,7 @@ func (e *Executor) Run() {
 	}
 
 	<-e.halt
-	log.Println("Stopped generating load...")
+	logInfo("Executor stopping...")
 	for _, hc := range haltChannels {
 		hc <- true
 	}

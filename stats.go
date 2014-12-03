@@ -3,7 +3,6 @@ package main
 import (
 	"bytes"
 	"fmt"
-	"log"
 	"sync/atomic"
 	"time"
 
@@ -83,7 +82,7 @@ func statsService(interval time.Duration) {
 			b.WriteString(statLog("reads", &CURRENT_STATS.Reads, &p.Reads))
 			b.WriteString(statLog("writes", &CURRENT_STATS.Writes, &p.Writes))
 
-			log.Println(b.String())
+			logStats(b.String())
 			b.Reset()
 		}
 	}

@@ -5,12 +5,13 @@ import (
 	"io"
 	"log"
 	"os"
+	"os/signal"
 	"runtime"
 	"syscall"
 	"time"
 
 	"github.com/aerospike/aerospike-client-go"
-	daemon "github.com/sevlyar/go-daemon"
+	// daemon "github.com/sevlyar/go-daemon"
 )
 
 var (
@@ -23,6 +24,9 @@ var (
 	loadId      string        = "default"
 	dataId      string        = "default"
 	logInterval time.Duration = time.Second
+	verbose     bool          = false
+
+	executor *Executor = nil
 )
 
 func main() {
@@ -36,12 +40,12 @@ func main() {
 	flag.StringVar(&loadId, "load", loadId, "The identifier of the load model to use.")
 	flag.StringVar(&dataId, "data", dataId, "The identifier of the data model to use.")
 	flag.DurationVar(&logInterval, "log-interval", logInterval, "Logging interval in seconds.")
+	flag.BoolVar(&verbose, "verbose", verbose, "Verbose logging to stdout.")
 	flag.Parse()
 
-	// signal handlers
-	daemon.SetSigHandler(termHandler, syscall.SIGTERM)
-	daemon.SetSigHandler(termHandler, syscall.SIGQUIT)
-	daemon.SetSigHandler(reloadHandler, syscall.SIGHUP)
+	// signal handling
+	signals := make(chan os.Signal, 1)
+	signal.Notify(signals, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
 
 	// setup logger
 	if logFile == "" {
@@ -53,34 +57,53 @@ func main() {
 		}
 		defer f.Close()
 
-		log.SetOutput(io.MultiWriter(os.Stdout, f))
+		if verbose {
+			log.SetOutput(io.MultiWriter(os.Stdout, f))
+		} else {
+			log.SetOutput(f)
+		}
 	}
 
 	// utlize full cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// load models
-	models := NewModels()
-	if err := models.Load(modelsFile); err != nil {
-		panicOnError(err)
-	}
-
 	// Aerospike Client
 	client, err := aerospike.NewClient(addr, port)
 	panicOnError(err)
 
-	// set up key and record generators
+	// services
+	go signalService(signals, client)
+	go statsService(logInterval)
+
+	// execute the current model
+	executor = execute(client)
+
+	// exit handled by signal handlers
+	halt := make(chan bool)
+	<-halt
+}
+
+func execute(client *aerospike.Client) *Executor {
+
+	logInfo("Loading Executor")
+
+	// load models
+	models := NewModels()
+	err := models.Load(modelsFile)
+	panicOnError(err)
+
+	// create generators
 	keys := NewPooledKeyGenerator(models.LoadModels[0], models.DataModels[0])
 	recs := NewPooledRecordGenerator(models.LoadModels[0], models.DataModels[0])
+
+	// new executor
 	exec := NewExecutor(client, models.LoadModels[0], keys, recs)
 
-	go statsService(time.Second)
+	// run
+	logInfo("Running Executor")
+	go exec.Run()
 
-	exec.Run()
-	// defer load.Stop()
-
-	// load.Wait()
-
+	return exec
 }
 
 func panicOnError(err error) {
@@ -90,16 +113,29 @@ func panicOnError(err error) {
 	}
 }
 
-func termHandler(sig os.Signal) error {
-	logInfo("terminating...")
-	return daemon.ErrStop
-}
-func reloadHandler(sig os.Signal) error {
-	logInfo("configuration reloaded")
-	return nil
-}
-
-func statusHandler(sig os.Signal) error {
-	logInfo("Up and running")
-	return nil
+func signalService(signals chan os.Signal, client *aerospike.Client) {
+	for {
+		select {
+		case s := <-signals:
+			switch s {
+			case syscall.SIGTERM:
+				logInfo("SIGTERM RECEIVED")
+				executor.Stop()
+				executor = nil
+				os.Exit(0)
+			case syscall.SIGQUIT:
+				logInfo("SIGQUIT RECEIVED")
+				executor.Stop()
+				executor = nil
+				os.Exit(0)
+			case syscall.SIGHUP:
+				logInfo("SIGHUP RECEIVED")
+				ex := executor
+				executor = execute(client)
+				ex.Stop()
+			default:
+				logError("Unhandled Signal: %v", s)
+			}
+		}
+	}
 }

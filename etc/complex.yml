@@ -49,6 +49,6 @@ Data:
 Load:
 
   - Id: default
-    Keys: 1000        # 10 Keys
-    Reads: 1       # 10 concurrent reads
-    Writes: 1      # 10 concurrent writes
+    Keys: 1000000     # 1M Keys
+    Reads: 32         # 32 concurrent reads
+    Writes: 32        # 32 concurrent writes

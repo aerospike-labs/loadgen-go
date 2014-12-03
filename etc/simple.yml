@@ -12,9 +12,9 @@ Data:
       Namespace: test
       Set: foo
       Key:
-        String:
+        Integer:
           Min: 1
-          Max: 5
+          Max: 100000
     Bins:
       - Name: a
         Value:
@@ -33,6 +33,6 @@ Data:
 Load:
 
   - Id: default
-    Keys: 1000        # 10 Keys
-    Reads: 1       # 10 concurrent reads
-    Writes: 1      # 10 concurrent writes
+    Keys: 100000    # 100k Keys
+    Reads: 40       # 40 concurrent reads
+    Writes: 10      # 10 concurrent writes
