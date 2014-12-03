@@ -33,7 +33,7 @@ func generateString(min int64, max int64) string {
 	n := randomInRange(min, max)
 	b := make([]rune, n)
 	for i := range b {
-		j := rand.Intn() % len(GENERATOR_CHARSET_ALPHA)
+		j := rand.Int() % len(GENERATOR_CHARSET_ALPHA)
 		b[i] = GENERATOR_CHARSET_ALPHA[j]
 	}
 	return string(b)
