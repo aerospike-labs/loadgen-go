@@ -5,13 +5,13 @@ import (
 	"io"
 	"log"
 	"os"
-	"os/signal"
+	// "os/signal"
 	"runtime"
 	"syscall"
 	"time"
 
 	"github.com/aerospike/aerospike-client-go"
-	// daemon "github.com/sevlyar/go-daemon"
+	daemon "github.com/sevlyar/go-daemon"
 )
 
 var (
@@ -25,11 +25,16 @@ var (
 	dataId      string        = "default"
 	logInterval time.Duration = time.Second
 	verbose     bool          = false
+	signame     string        = ""
 
-	executor *Executor = nil
+	executor *Executor         = nil
+	client   *aerospike.Client = nil
 )
 
 func main() {
+
+	// error
+	var err error
 
 	// parse arguments
 	flag.StringVar(&pidFile, "pid", pidFile, "Path to PID file.")
@@ -41,11 +46,50 @@ func main() {
 	flag.StringVar(&dataId, "data", dataId, "The identifier of the data model to use.")
 	flag.DurationVar(&logInterval, "log-interval", logInterval, "Logging interval in seconds.")
 	flag.BoolVar(&verbose, "verbose", verbose, "Verbose logging to stdout.")
+
+	flag.StringVar(&signame, "signal", signame, `send signal to the daemon
+		quit — graceful shutdown
+		stop — fast shutdown
+		reload — reloading the configuration file`)
+
 	flag.Parse()
 
-	// signal handling
-	signals := make(chan os.Signal, 1)
-	signal.Notify(signals, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+	// daemon signal handlers
+	daemon.AddCommand(daemon.StringFlag(&signame, "quit"), syscall.SIGQUIT, signalTerm)
+	daemon.AddCommand(daemon.StringFlag(&signame, "stop"), syscall.SIGTERM, signalTerm)
+	daemon.AddCommand(daemon.StringFlag(&signame, "reload"), syscall.SIGHUP, signalHup)
+
+	// // signal handling
+	// signals := make(chan os.Signal, 1)
+	// signal.Notify(signals, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+
+	cntxt := &daemon.Context{
+		PidFileName: pidFile,
+		PidFilePerm: 0644,
+		LogFileName: logFile,
+		LogFilePerm: 0644,
+		WorkDir:     "./",
+		Umask:       027,
+		Args:        []string{},
+	}
+
+	if len(daemon.ActiveFlags()) > 0 {
+		d, err := cntxt.Search()
+		if err != nil {
+			log.Fatalln("Unable send signal to the daemon:", err)
+		}
+		daemon.SendCommands(d)
+		return
+	}
+
+	d, err := cntxt.Reborn()
+	if err != nil {
+		log.Fatalln(err)
+	}
+	if d != nil {
+		return
+	}
+	defer cntxt.Release()
 
 	// setup logger
 	if logFile == "" {
@@ -68,22 +112,25 @@ func main() {
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
 	// Aerospike Client
-	client, err := aerospike.NewClient(addr, port)
+	client, err = aerospike.NewClient(addr, port)
 	panicOnError(err)
 
 	// services
-	go signalService(signals, client)
+	// go signalService(signals)
 	go statsService(logInterval)
 
 	// execute the current model
-	executor = execute(client)
+	executor = execute()
+
+	err = daemon.ServeSignals()
+	panicOnError(err)
 
 	// exit handled by signal handlers
 	halt := make(chan bool)
 	<-halt
 }
 
-func execute(client *aerospike.Client) *Executor {
+func execute() *Executor {
 
 	logInfo("Loading Executor")
 
@@ -113,29 +160,44 @@ func panicOnError(err error) {
 	}
 }
 
-func signalService(signals chan os.Signal, client *aerospike.Client) {
-	for {
-		select {
-		case s := <-signals:
-			switch s {
-			case syscall.SIGTERM:
-				logInfo("SIGTERM RECEIVED")
-				executor.Stop()
-				executor = nil
-				os.Exit(0)
-			case syscall.SIGQUIT:
-				logInfo("SIGQUIT RECEIVED")
-				executor.Stop()
-				executor = nil
-				os.Exit(0)
-			case syscall.SIGHUP:
-				logInfo("SIGHUP RECEIVED")
-				ex := executor
-				executor = execute(client)
-				ex.Stop()
-			default:
-				logError("Unhandled Signal: %v", s)
-			}
-		}
-	}
+func signalTerm(sig os.Signal) error {
+	logInfo("Signal Received %v", sig)
+	executor.Stop()
+	os.Exit(0)
+	return nil
 }
+
+func signalHup(sig os.Signal) error {
+	logInfo("Signal Received %v", sig)
+	ex := executor
+	executor = execute()
+	ex.Stop()
+	return nil
+}
+
+// func signalService(signals chan os.Signal, client *aerospike.Client) {
+// 	for {
+// 		select {
+// 		case s := <-signals:
+// 			switch s {
+// 			case syscall.SIGTERM:
+// 				logInfo("SIGTERM RECEIVED")
+// 				executor.Stop()
+// 				executor = nil
+// 				os.Exit(0)
+// 			case syscall.SIGQUIT:
+// 				logInfo("SIGQUIT RECEIVED")
+// 				executor.Stop()
+// 				executor = nil
+// 				os.Exit(0)
+// 			case syscall.SIGHUP:
+// 				logInfo("SIGHUP RECEIVED")
+// 				ex := executor
+// 				executor = execute()
+// 				ex.Stop()
+// 			default:
+// 				logError("Unhandled Signal: %v", s)
+// 			}
+// 		}
+// 	}
+// }
