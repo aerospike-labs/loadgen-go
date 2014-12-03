@@ -1,10 +1,6 @@
 package main
 
 import (
-	"math/rand"
-	"runtime"
-	"time"
-
 	"github.com/aerospike/aerospike-client-go"
 )
 
@@ -60,28 +56,25 @@ func (e *Executor) Stop() {
 func (e *Executor) Run() {
 
 	nops := e.initialize()
-	ncpu := int64(runtime.NumCPU())
-	nthr := nops
 
 	// run load generators
 	haltChannels := []chan bool{}
 
 	var i int64
-	for i = 0; i < nthr; i++ {
+	for i = 0; i < nops; i++ {
 		hChan := make(chan bool)
 		haltChannels = append(haltChannels, hChan)
 
-		go func(halt chan bool) {
-			r := rand.New(rand.NewSource(time.Now().UnixNano()))
+		go func(halt chan bool, op func()) {
 			for {
 				select {
 				case <-halt:
 					return
 				default:
-					e.Operations[r.Intn(len(e.Operations))]()
+					op()
 				}
 			}
-		}(hChan)
+		}(hChan, e.Operations[i])
 	}
 
 	<-e.halt
