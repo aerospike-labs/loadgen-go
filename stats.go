@@ -10,76 +10,81 @@ import (
 	"github.com/aerospike/aerospike-client-go/types"
 )
 
-var count, totalCount, timeouts, totalTimeouts, errs, totalErrs uint64
-var statLog = []*StatsLog{}
+var (
+	CURRENT_STATS Stats = Stats{}
+)
 
-var stats = map[string]*OpStat{
-	OPGET:      &OpStat{Op: OPGET},
-	OPPUT:      &OpStat{Op: OPPUT},
-	OPDELETE:   &OpStat{Op: OPDELETE},
-	OPSCAN:     &OpStat{Op: OPSCAN},
-	OPQUERY:    &OpStat{Op: OPQUERY},
-	OPEXEC_UDF: &OpStat{Op: OPEXEC_UDF},
-}
-
-type OpStat struct {
-	Op       string
+type Stat struct {
 	Count    uint64
 	Timeouts uint64
-	Errs     uint64
+	Errors   uint64
 }
 
-type StatsLog struct {
-	Timestamp time.Time
-	OpStat
+type Stats struct {
+	Reads  Stat
+	Writes Stat
 }
 
-func atomicLog(op string) *StatsLog {
-	newStats := &OpStat{Op: op}
-	stat := stats[op]
-	stats[op] = newStats
-	newLog := &StatsLog{
-		Timestamp: time.Now(),
-		OpStat:    *stat,
-	}
-
-	statLog = append(statLog, newLog)
-	return newLog
-}
-
-func atomicStat(op string, err error) {
-	stat := stats[op]
-
+func statUpdate(s *Stat, err error) {
 	if err == nil {
-		atomic.AddUint64(&stat.Count, 1)
-	} else if err != nil {
+		statSuccess(s)
+	} else {
 		t, ok := err.(types.AerospikeError)
 		if ok && t.ResultCode() == types.TIMEOUT {
-			atomic.AddUint64(&stat.Timeouts, 1)
+			statTimeout(s)
 		} else {
-			atomic.AddUint64(&stat.Errs, 1)
+			statError(s)
 		}
 	}
 }
 
+func statSuccess(s *Stat) {
+	atomic.AddUint64(&s.Count, 1)
+}
+
+func statTimeout(s *Stat) {
+	atomic.AddUint64(&s.Timeouts, 1)
+}
+
+func statError(s *Stat) {
+	atomic.AddUint64(&s.Errors, 1)
+}
+
+func statLog(n string, s *Stat, p *Stat) string {
+
+	sc := atomic.LoadUint64(&s.Count)
+	st := atomic.LoadUint64(&s.Timeouts)
+	se := atomic.LoadUint64(&s.Errors)
+
+	pc := atomic.LoadUint64(&p.Count)
+	pt := atomic.LoadUint64(&p.Timeouts)
+	pe := atomic.LoadUint64(&p.Errors)
+
+	dc := sc - pc
+	dt := st - pt
+	de := se - pe
+
+	atomic.StoreUint64(&p.Count, sc)
+	atomic.StoreUint64(&p.Timeouts, st)
+	atomic.StoreUint64(&p.Errors, se)
+
+	return fmt.Sprintf("{%s: count=%d/%d, timeouts=%d/%d, errors=%d/%d} ", n, dc, sc, dt, st, de, se)
+}
+
 func statsService(interval time.Duration) {
-	logs := make([]*StatsLog, 6)
-	logStr := bytes.NewBuffer(nil)
+
+	p := Stats{}
+	b := bytes.NewBuffer(nil)
+
 	for {
 		select {
 		case <-time.After(interval):
-			logs[0] = atomicLog(OPGET)
-			logs[1] = atomicLog(OPPUT)
-			logs[2] = atomicLog(OPDELETE)
-			logs[3] = atomicLog(OPSCAN)
-			logs[4] = atomicLog(OPQUERY)
-			logs[5] = atomicLog(OPEXEC_UDF)
 
-			for _, l := range logs {
-				logStr.WriteString(fmt.Sprintf("{%s: count=%d, timeouts=%d, errors=%d} ", l.Op, l.Count, l.Timeouts, l.Errs))
-			}
-			log.Println(logStr.String())
-			logStr.Reset()
+			b.WriteString(statLog("reads", &CURRENT_STATS.Reads, &p.Reads))
+			b.WriteString(statLog("writes", &CURRENT_STATS.Writes, &p.Writes))
+
+			log.Println(b.String())
+			b.Reset()
 		}
 	}
 }

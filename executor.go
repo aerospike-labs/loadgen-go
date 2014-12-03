@@ -30,23 +30,21 @@ func NewExecutor(client *aerospike.Client, load *LoadModel, keys KeyGenerator, r
 	}
 }
 
-func (e *Executor) Initialize() {
-
-	ops := NewOpGenerator(e.Client, e.Keys, e.Records)
+func (e *Executor) initialize() {
 
 	var i int64 = 0
 	var o int64 = 0
 
 	if e.Load.Reads > 0 {
 		for i = 0; i < e.Load.Reads; i++ {
-			e.Operations[o+i] = ops.GenerateGet()
+			e.Operations[o+i] = ReadGenerator(e.Client, e.Keys)
 		}
 		o += i
 	}
 
 	if e.Load.Writes > 0 {
 		for i = 0; i < e.Load.Writes; i++ {
-			e.Operations[o+i] = ops.GeneratePut()
+			e.Operations[o+i] = WriteGenerator(e.Client, e.Keys, e.Records)
 		}
 		o += i
 	}
@@ -60,7 +58,7 @@ func (e *Executor) Stop() {
 
 func (e *Executor) Run() {
 
-	e.Initialize()
+	e.initialize()
 
 	// run load generators
 	haltChannels := []chan bool{}

@@ -2,6 +2,7 @@ package main
 
 import (
 	"flag"
+	"io"
 	"log"
 	"os"
 	"runtime"
@@ -51,7 +52,8 @@ func main() {
 			log.Fatalf("error opening file: %v", err)
 		}
 		defer f.Close()
-		log.SetOutput(f)
+
+		log.SetOutput(io.MultiWriter(os.Stdout, f))
 	}
 
 	// utlize full cores
@@ -59,7 +61,9 @@ func main() {
 
 	// load models
 	models := NewModels()
-	models.Load(modelsFile)
+	if err := models.Load(modelsFile); err != nil {
+		panicOnError(err)
+	}
 
 	// Aerospike Client
 	client, err := aerospike.NewClient(addr, port)
@@ -69,6 +73,8 @@ func main() {
 	keys := NewPooledKeyGenerator(models.LoadModels[0], models.DataModels[0])
 	recs := NewPooledRecordGenerator(models.LoadModels[0], models.DataModels[0])
 	exec := NewExecutor(client, models.LoadModels[0], keys, recs)
+
+	go statsService(time.Second)
 
 	exec.Run()
 	// defer load.Stop()
@@ -80,6 +86,7 @@ func main() {
 func panicOnError(err error) {
 	if err != nil {
 		logError("%v", err)
+		panic(err)
 	}
 }
 

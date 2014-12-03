@@ -1,0 +1,38 @@
+
+# -----------------------------------------------------------------------------
+# Data Model
+#
+# Defines one or many data models, which can be references by different loads
+# Each data model describes the key and the bins for each record
+# -----------------------------------------------------------------------------
+Data:
+
+  - Id: default
+    Keys:
+      Namespace: test
+      Set: foo
+      Key:
+        String:
+          Min: 1
+          Max: 5
+    Bins:
+      - Name: a
+        Value:
+          Integer:
+            Min: 1
+            Max: 1
+
+
+# -----------------------------------------------------------------------------
+# Load Model
+#
+# Defines one or many load models, which can be executed
+# Each load model describes the which data model should be used, and the work
+# balance.
+# -----------------------------------------------------------------------------
+Load:
+
+  - Id: default
+    Keys: 1000        # 10 Keys
+    Reads: 1       # 10 concurrent reads
+    Writes: 1      # 10 concurrent writes
