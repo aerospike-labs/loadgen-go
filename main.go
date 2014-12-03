@@ -2,16 +2,13 @@ package main
 
 import (
 	"flag"
-	// "fmt"
-	// "io/ioutil"
 	"log"
 	"os"
 	"runtime"
-	// "strings"
 	"syscall"
 	"time"
 
-	as "github.com/aerospike/aerospike-client-go"
+	"github.com/aerospike/aerospike-client-go"
 	daemon "github.com/sevlyar/go-daemon"
 )
 
@@ -65,18 +62,18 @@ func main() {
 	models.Load(modelsFile)
 
 	// Aerospike Client
-	client, err := as.NewClient(addr, port)
+	client, err := aerospike.NewClient(addr, port)
 	panicOnError(err)
 
 	// set up key and record generators
 	keys := NewPooledKeyGenerator(models.LoadModels[0], models.DataModels[0])
 	recs := NewPooledRecordGenerator(models.LoadModels[0], models.DataModels[0])
-	load := NewLoadGenerator(models.LoadModels[0], keys, recs, client)
+	exec := NewExecutor(client, models.LoadModels[0], keys, recs)
 
-	load.Start()
-	defer load.Stop()
+	exec.Run()
+	// defer load.Stop()
 
-	load.Wait()
+	// load.Wait()
 
 }
 

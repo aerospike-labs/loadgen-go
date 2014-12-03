@@ -42,7 +42,6 @@ type LoadGenerator struct {
 	Records  RecordGenerator
 	Client   *as.Client
 	Model    *LoadModel
-	Data     *DataModel
 	Done     chan int
 	Channels OpChannels
 	State    uint32
@@ -125,8 +124,13 @@ func (g *LoadGenerator) Start() {
 		go g.executeWrites()
 	}
 
-	go g.generateReads()
-	go g.generateReads()
+	if g.Model.Writes > 0 {
+		go g.generateWrites()
+	}
+
+	if g.Model.Reads > 0 {
+		go g.generateReads()
+	}
 }
 
 func (g *LoadGenerator) Stop() {

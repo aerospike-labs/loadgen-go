@@ -1,18 +1,18 @@
 package main
 
 import (
-	as "github.com/aerospike/aerospike-client-go"
+	"github.com/aerospike/aerospike-client-go"
 	"sync/atomic"
 )
 
 type KeyGenerator interface {
-	GenerateKey() *as.Key
+	GenerateKey() *aerospike.Key
 }
 
 type PooledKeyGenerator struct {
 	Size     int64
 	Capacity int64
-	Keys     []*as.Key
+	Keys     []*aerospike.Key
 	Load     *LoadModel
 	Data     *DataModel
 }
@@ -22,7 +22,7 @@ func NewPooledKeyGenerator(load *LoadModel, data *DataModel) *PooledKeyGenerator
 	g := &PooledKeyGenerator{
 		Size:     0,
 		Capacity: n,
-		Keys:     make([]*as.Key, n),
+		Keys:     make([]*aerospike.Key, n),
 		Load:     load,
 		Data:     data,
 	}
@@ -38,11 +38,14 @@ func (g *PooledKeyGenerator) generate() {
 	}
 }
 
-func (g *PooledKeyGenerator) GenerateKey() *as.Key {
+func (g *PooledKeyGenerator) GenerateKey() *aerospike.Key {
 	n := atomic.LoadInt64(&g.Size)
-	if n > 0 {
-		i := RANDOM.Int63n(n)
+	if n > 1 {
+		i := RANDOM.Int63n(n - 1)
 		return g.Keys[i]
+	} else if n == 1 {
+		return g.Keys[0]
+	} else {
+		return nil
 	}
-	return nil
 }
