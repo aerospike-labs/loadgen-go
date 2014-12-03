@@ -34,7 +34,8 @@ func NewPooledKeyGenerator(load *LoadModel, data *DataModel) *PooledKeyGenerator
 func (g *PooledKeyGenerator) generate() {
 	var i int64
 	for i = 0; i < g.Capacity; i++ {
-		if key, err := aerospike.NewKey(g.Data.Keys.Namespace, g.Data.Keys.Set, GenerateValue(&g.Data.Keys.Key)); err == nil {
+		// if key, err := aerospike.NewKey(g.Data.Keys.Namespace, g.Data.Keys.Set, GenerateValue(&g.Data.Keys.Key)); err == nil {
+		if key, err := aerospike.NewKey(g.Data.Keys.Namespace, g.Data.Keys.Set, i); err == nil {
 			g.Keys[i] = key
 			atomic.AddInt64(&g.Size, 1)
 		}
