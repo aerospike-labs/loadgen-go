@@ -40,11 +40,9 @@ func (g *PooledRecordGenerator) generate() {
 
 func (g *PooledRecordGenerator) GenerateRecord() []*aerospike.Bin {
 	n := atomic.LoadInt64(&g.Size)
-	if n > 1 {
-		i := RANDOM.Int63n(n - 1)
+	if n > 0 {
+		i := RANDOM.Int63() % n
 		return g.Records[i]
-	} else if n == 1 {
-		return g.Records[0]
 	} else {
 		return nil
 	}

@@ -1,6 +1,6 @@
 # plan file
 Hosts: 
-    - Host: 127.0.0.1
+    - Host: 192.168.106.181
       Port: 3000
 Timeout: 50                           # in milliseconds
 Keys: 1000000                         # number of keys to be generated
