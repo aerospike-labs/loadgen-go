@@ -12,7 +12,7 @@ func ReadGenerator(client *aerospike.Client, keys KeyGenerator) func() {
 	return func() {
 		if k := keys.GenerateKey(); k != nil {
 			_, err = client.Get(policy, k)
-			statUpdate(&CURRENT_STATS.Writes, err)
+			statUpdate(&CURRENT_STATS.Reads, err)
 		}
 	}
 }
@@ -27,7 +27,7 @@ func WriteGenerator(client *aerospike.Client, keys KeyGenerator, records RecordG
 		if k := keys.GenerateKey(); k != nil {
 			if b := records.GenerateRecord(); b != nil {
 				err = client.PutBins(policy, k, b...)
-				statUpdate(&CURRENT_STATS.Reads, err)
+				statUpdate(&CURRENT_STATS.Writes, err)
 			}
 		}
 	}

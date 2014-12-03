@@ -59,9 +59,7 @@ func main() {
 	daemon.AddCommand(daemon.StringFlag(&signame, "stop"), syscall.SIGTERM, signalTerm)
 	daemon.AddCommand(daemon.StringFlag(&signame, "reload"), syscall.SIGHUP, signalHup)
 
-	// // signal handling
-	// signals := make(chan os.Signal, 1)
-	// signal.Notify(signals, syscall.SIGTERM, syscall.SIGQUIT, syscall.SIGHUP)
+	// daemon context
 
 	cntxt := &daemon.Context{
 		PidFileName: pidFile,
@@ -116,7 +114,6 @@ func main() {
 	panicOnError(err)
 
 	// services
-	// go signalService(signals)
 	go statsService(logInterval)
 
 	// execute the current model
@@ -174,30 +171,3 @@ func signalHup(sig os.Signal) error {
 	ex.Stop()
 	return nil
 }
-
-// func signalService(signals chan os.Signal, client *aerospike.Client) {
-// 	for {
-// 		select {
-// 		case s := <-signals:
-// 			switch s {
-// 			case syscall.SIGTERM:
-// 				logInfo("SIGTERM RECEIVED")
-// 				executor.Stop()
-// 				executor = nil
-// 				os.Exit(0)
-// 			case syscall.SIGQUIT:
-// 				logInfo("SIGQUIT RECEIVED")
-// 				executor.Stop()
-// 				executor = nil
-// 				os.Exit(0)
-// 			case syscall.SIGHUP:
-// 				logInfo("SIGHUP RECEIVED")
-// 				ex := executor
-// 				executor = execute()
-// 				ex.Stop()
-// 			default:
-// 				logError("Unhandled Signal: %v", s)
-// 			}
-// 		}
-// 	}
-// }
