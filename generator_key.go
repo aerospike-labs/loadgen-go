@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/aerospike/aerospike-client-go"
+	"math/rand"
 	"sync/atomic"
 )
 
@@ -33,15 +34,17 @@ func NewPooledKeyGenerator(load *LoadModel, data *DataModel) *PooledKeyGenerator
 func (g *PooledKeyGenerator) generate() {
 	var i int64
 	for i = 0; i < g.Capacity; i++ {
-		atomic.AddInt64(&g.Size, 1)
-		g.Keys[i] = GenerateKey(&g.Data.Keys)
+		if key, err := aerospike.NewKey(g.Data.Keys.Namespace, g.Data.Keys.Set, GenerateValue(&g.Data.Keys.Key)); err == nil {
+			g.Keys[i] = key
+			atomic.AddInt64(&g.Size, 1)
+		}
 	}
 }
 
 func (g *PooledKeyGenerator) GenerateKey() *aerospike.Key {
 	n := atomic.LoadInt64(&g.Size)
 	if n > 0 {
-		i := RANDOM.Int63() % n
+		i := rand.Int63() % n
 		return g.Keys[i]
 	} else {
 		return nil

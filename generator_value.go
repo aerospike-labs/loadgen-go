@@ -5,11 +5,11 @@ import (
 	as "github.com/aerospike/aerospike-client-go"
 	// "math"
 	"math/rand"
-	"time"
+	// "time"
 )
 
 var (
-	RANDOM                  = rand.New(rand.NewSource(time.Now().UnixNano()))
+	// RANDOM                  = rand.New(rand.NewSource(time.Now().UnixNano()))
 	GENERATOR_CHARSET_ALPHA = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
@@ -18,7 +18,7 @@ func randomInRange(min int64, max int64) int64 {
 		return min
 	} else if min < max {
 		var i int64 = 0
-		for i = RANDOM.Int63n(max); i < min; i = RANDOM.Int63n(max) {
+		for i = rand.Int63n(max); i < min; i = rand.Int63n(max) {
 		}
 		return i
 	}
@@ -33,7 +33,8 @@ func generateString(min int64, max int64) string {
 	n := randomInRange(min, max)
 	b := make([]rune, n)
 	for i := range b {
-		b[i] = GENERATOR_CHARSET_ALPHA[RANDOM.Intn(len(GENERATOR_CHARSET_ALPHA))]
+		j := rand.Intn() % len(GENERATOR_CHARSET_ALPHA)
+		b[i] = GENERATOR_CHARSET_ALPHA[j]
 	}
 	return string(b)
 }
@@ -46,7 +47,7 @@ func GenerateBytes(c *BytesConstraints) []byte {
 	n := randomInRange(c.Min, c.Max)
 	b := make([]byte, n)
 	for i := range b {
-		b[i] = byte(RANDOM.Intn(256))
+		b[i] = byte(rand.Intn(256))
 	}
 	return b
 }
@@ -99,18 +100,4 @@ func GenerateBins(l BinConstraintsList) []*as.Bin {
 		bins[i] = bin
 	}
 	return bins
-}
-
-func GenerateKey(c *KeyConstraints) *as.Key {
-	key, _ := as.NewKey(c.Namespace, c.Set, GenerateValue(&c.Key))
-	return key
-}
-
-func GenerateKeys(c *KeyConstraints, n int) []as.Key {
-	keys := make([]as.Key, n)
-	for i := range keys {
-		key, _ := as.NewKey(c.Namespace, c.Set, GenerateValue(&c.Key))
-		keys[i] = *key
-	}
-	return keys
 }

@@ -65,7 +65,7 @@ func (e *Executor) Run() {
 	// run load generators
 	haltChannels := []chan bool{}
 
-	for i := 0; i < runtime.NumCPU()*2; i++ {
+	for i := 0; i < runtime.NumCPU()*4; i++ {
 		hChan := make(chan bool)
 		haltChannels = append(haltChannels, hChan)
 

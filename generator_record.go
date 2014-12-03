@@ -2,6 +2,7 @@ package main
 
 import (
 	"github.com/aerospike/aerospike-client-go"
+	"math/rand"
 	"sync/atomic"
 )
 
@@ -32,16 +33,20 @@ func NewPooledRecordGenerator(load *LoadModel, data *DataModel) *PooledRecordGen
 
 func (g *PooledRecordGenerator) generate() {
 	var i int64
+	b := len(g.Data.Bins)
 	for i = 0; i < g.Capacity; i++ {
+		g.Records[i] = make([]*aerospike.Bin, b)
+		for j, c := range g.Data.Bins {
+			g.Records[i][j] = aerospike.NewBin(c.Name, GenerateValue(&c.Value))
+		}
 		atomic.AddInt64(&g.Size, 1)
-		g.Records[i] = GenerateBins(g.Data.Bins)
 	}
 }
 
 func (g *PooledRecordGenerator) GenerateRecord() []*aerospike.Bin {
 	n := atomic.LoadInt64(&g.Size)
 	if n > 0 {
-		i := RANDOM.Int63() % n
+		i := rand.Int63() % n
 		return g.Records[i]
 	} else {
 		return nil

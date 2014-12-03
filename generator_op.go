@@ -25,8 +25,6 @@ func (g *OpGenerator) GenerateGet() func() {
 	policy := aerospike.NewPolicy()
 
 	return func() {
-		// key will be nil if existing only is requested and there are
-		// no existing keys yet
 		if k := g.Keys.GenerateKey(); k != nil {
 			_, err = g.Client.Get(policy, k)
 			atomicStat(OPGET, err)
@@ -42,11 +40,10 @@ func (g *OpGenerator) GeneratePut() func() {
 
 	return func() {
 		if k := g.Keys.GenerateKey(); k != nil {
-
-			bins := g.Records.GenerateRecord()
-
-			err = g.Client.PutBins(policy, k, bins...)
-			atomicStat(OPPUT, err)
+			if b := g.Records.GenerateRecord(); b != nil {
+				err = g.Client.PutBins(policy, k, b...)
+				atomicStat(OPPUT, err)
+			}
 		}
 	}
 }
@@ -60,9 +57,6 @@ func (g *OpGenerator) GenerateDelete() func() {
 		if k := g.Keys.GenerateKey(); k != nil {
 			_, err = g.Client.Delete(policy, k)
 			atomicStat(OPDELETE, err)
-			if err != nil {
-				keySet.DropKey(k)
-			}
 		}
 	}
 }

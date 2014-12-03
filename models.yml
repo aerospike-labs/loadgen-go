@@ -74,51 +74,6 @@ Data:
 Load:
 
   - Id: default
-    Keys: 10        # 10 Keys
-    Reads: 100       # 10 concurrent reads
-    Writes: 100      # 10 concurrent writes
-
-  - Id: w100
-    Writes: 100     # 100% Writes
-
-  - Id: r100
-    Reads: 100      # 100% Reads
-
-  - Id: r50-w50
-    Reads: 50       # 50% Reads
-    Writes: 50      # 50% Writes
-
-  - Id: r30-w70
-    Reads: 30       # 30% Reads
-    Writes: 70      # 70% Writes
-
-  - Id: r70-w30
-    Reads: 70       # 70% Reads
-    Writes: 30      # 30% Writes
-
-  - Id: r50-w40-q10
-    Reads: 50       # 50% Reads
-    Writes: 40      # 40% Writes
-    Queries: 10     # 10% Queries
-
-
-# -----------------------------------------------------------------------------
-# Run Spec
-#
-# Each entry specifies the data model and the load model to be used in running.
-# The Objects fiels is optional, and specifies how many objects should be 
-# used. If not specified, an unlimited number of objects will be used.
-# -----------------------------------------------------------------------------
-Run:
-
-  - Load: w100      # Load Model
-    Data: foo       # Data Model
-
-  - Load: w100      # Load Model
-    Data: bar       # Data Model
-    Objects: 1M     # Number of Objects
-
-  - Load: r50-w50   # Load Model
-    Data: bar       # Data Model
-    Objects: 1M     # Number of Objects
-
+    Keys: 1000        # 10 Keys
+    Reads: 1       # 10 concurrent reads
+    Writes: 1      # 10 concurrent writes
