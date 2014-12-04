@@ -50,6 +50,8 @@ func (e *Executor) initialize() int64 {
 func (e *Executor) Stop() {
 	e.halt <- true
 	<-e.halt
+	e.Client.Close()
+	e.Client = nil
 	logInfo("Executor stopped.")
 }
 

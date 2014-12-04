@@ -25,8 +25,7 @@ var (
 	verbose     bool          = false
 	signame     string        = ""
 
-	executor *Executor         = nil
-	client   *aerospike.Client = nil
+	executor *Executor = nil
 )
 
 func main() {
@@ -123,24 +122,26 @@ func execute() *Executor {
 
 	logInfo("Loading Executor")
 
+	var err error = nil
+
 	// load models
 	models := NewModels()
-	err := models.Load(modelsFile)
+	err = models.Load(modelsFile)
 	panicOnError(err)
 
-	if client != nil {
-		client.Close()
+	// iterate over hosts
+	hosts := make([]*aerospike.Host, len(models.Hosts))
+	for i, h := range models.Hosts {
+		hosts[i] = aerospike.NewHost(h.Addr, h.Port)
+		logInfo("Adding host (%s:%v)", h.Addr, h.Port)
 	}
 
-	logInfo("Hosts %#v", models.Hosts)
-
-	hosts := []*aerospike.Host{}
-	for _, h := range models.Hosts {
-		hosts = append(hosts, aerospike.NewHost(h.Addr, h.Port))
+	// create client
+	client, err := aerospike.NewClientWithPolicyAndHost(nil, hosts...)
+	if err != nil {
+		logError("Not able to connect to cluster: %s", err.Error())
+		panicOnError(err)
 	}
-
-	client, err = aerospike.NewClientWithPolicyAndHost(nil, hosts...)
-	panicOnError(err)
 
 	// create generators
 	keys := NewPooledKeyGenerator(models.LoadModels[0], models.DataModels[0])
