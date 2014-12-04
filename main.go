@@ -16,8 +16,6 @@ import (
 
 var (
 	spec                      = map[string]interface{}{}
-	addr        string        = "0.0.0.0"
-	port        int           = 3000
 	pidFile     string        = "loadgen.pid"
 	logFile     string        = "loadgen.log"
 	modelsFile  string        = "models.yml"
@@ -39,8 +37,6 @@ func main() {
 	// parse arguments
 	flag.StringVar(&pidFile, "pid", pidFile, "Path to PID file.")
 	flag.StringVar(&logFile, "log", logFile, "Path to log file.")
-	flag.StringVar(&addr, "addr", addr, "Address to a machine in the cluster.")
-	flag.IntVar(&port, "port", port, "Port to a machine in the cluster.")
 	flag.StringVar(&modelsFile, "models", modelsFile, "Path to models specification file.")
 	flag.StringVar(&loadId, "load", loadId, "The identifier of the load model to use.")
 	flag.StringVar(&dataId, "data", dataId, "The identifier of the data model to use.")
@@ -136,10 +132,14 @@ func execute() *Executor {
 		client.Close()
 	}
 
+	logInfo("Hosts %#v", models.Hosts)
+
 	hosts := make([]*aerospike.Host, len(models.Hosts))
 	for i, h := range models.Hosts {
 		hosts[i] = aerospike.NewHost(h.Addr, h.Port)
 	}
+
+	logInfo("hosts %#v", hosts)
 
 	client, err = aerospike.NewClientWithPolicyAndHost(nil, hosts...)
 	panicOnError(err)

@@ -98,7 +98,7 @@ type HostSpec struct {
 }
 
 type Models struct {
-	Hosts      []HostSpec
+	Hosts      []HostSpec    `Hosts`
 	LoadModels LoadModelList `Load`
 	DataModels DataModelList `Data`
 }
