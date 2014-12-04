@@ -134,12 +134,10 @@ func execute() *Executor {
 
 	logInfo("Hosts %#v", models.Hosts)
 
-	hosts := make([]*aerospike.Host, len(models.Hosts))
+	hosts := []*aerospike.Host{}
 	for i, h := range models.Hosts {
-		hosts[i] = aerospike.NewHost(h.Addr, h.Port)
+		hosts = append(hosts, aerospike.NewHost(h.Addr, h.Port))
 	}
-
-	logInfo("hosts %#v", hosts)
 
 	client, err = aerospike.NewClientWithPolicyAndHost(nil, hosts...)
 	panicOnError(err)
