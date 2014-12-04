@@ -109,10 +109,6 @@ func main() {
 	// utlize full cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
 
-	// Aerospike Client
-	client, err = aerospike.NewClient(addr, port)
-	panicOnError(err)
-
 	// services
 	go statsService(logInterval)
 
@@ -134,6 +130,18 @@ func execute() *Executor {
 	// load models
 	models := NewModels()
 	err := models.Load(modelsFile)
+	panicOnError(err)
+
+	if client != nil {
+		client.Close()
+	}
+
+	hosts := make([]*aerospike.Host, len(models.Hosts))
+	for i, h := range models.Hosts {
+		hosts[i] = aerospike.NewHost(h.Addr, h.Port)
+	}
+
+	client, err = aerospike.NewClientWithPolicyAndHost(nil, hosts...)
 	panicOnError(err)
 
 	// create generators

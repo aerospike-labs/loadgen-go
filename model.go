@@ -92,7 +92,13 @@ type LoadModel struct {
 
 type LoadModelList []*LoadModel
 
+type HostSpec struct {
+	Addr string `Addr`
+	Port int    `Port`
+}
+
 type Models struct {
+	Hosts      []HostSpec
 	LoadModels LoadModelList `Load`
 	DataModels DataModelList `Data`
 }
