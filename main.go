@@ -135,7 +135,7 @@ func execute() *Executor {
 	logInfo("Hosts %#v", models.Hosts)
 
 	hosts := []*aerospike.Host{}
-	for i, h := range models.Hosts {
+	for _, h := range models.Hosts {
 		hosts = append(hosts, aerospike.NewHost(h.Addr, h.Port))
 	}
 
