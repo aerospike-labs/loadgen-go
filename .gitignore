@@ -1,3 +1,4 @@
 loadgen-go
 loadgen.log
+loadgen.pid
 run/
