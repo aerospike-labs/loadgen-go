@@ -57,18 +57,17 @@ func (e *Executor) Stop() {
 
 func executeOp(halt chan bool, op func()) {
 	for {
-		select {
-		case <-halt:
-			return
-		default:
-			op()
-		}
+		op()
+		// select {
+		// case <-halt:
+		// 	return
+		// default:
+		// 	op()
+		// }
 	}
 }
 
 func (e *Executor) Run() {
-
-	// nops := e.initialize()
 
 	// run load generators
 	haltChannels := []chan bool{}
@@ -77,8 +76,8 @@ func (e *Executor) Run() {
 	var o int64 = 0
 
 	if e.Load.Reads > 0 {
+		op := ReadGenerator(e.Client, e.Keys)
 		for i = 0; i < e.Load.Reads; i++ {
-			op := ReadGenerator(e.Client, e.Keys)
 			halt := make(chan bool)
 			haltChannels = append(haltChannels, halt)
 			go executeOp(halt, op)
@@ -87,8 +86,8 @@ func (e *Executor) Run() {
 	}
 
 	if e.Load.Writes > 0 {
+		op := WriteGenerator(e.Client, e.Keys, e.Records)
 		for i = 0; i < e.Load.Writes; i++ {
-			op := WriteGenerator(e.Client, e.Keys, e.Records)
 			halt := make(chan bool)
 			haltChannels = append(haltChannels, halt)
 			go executeOp(halt, op)
