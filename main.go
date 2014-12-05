@@ -160,7 +160,9 @@ func execute() *Executor {
 
 	// create generators
 	keys := NewPooledKeyGenerator(loadModel, dataModel)
+	keys.generate()
 	recs := NewPooledRecordGenerator(loadModel, dataModel)
+	recs.generate()
 
 	// new executor
 	exec := NewExecutor(client, loadModel, keys, recs)

@@ -27,7 +27,6 @@ func NewPooledRecordGenerator(load *LoadModel, data *DataModel) *PooledRecordGen
 		Load:     load,
 		Data:     data,
 	}
-	go g.generate()
 	return g
 }
 
