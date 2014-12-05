@@ -32,13 +32,12 @@ func (e *Executor) Stop() {
 
 func executeOp(halt chan bool, op func()) {
 	for {
-		op()
-		// select {
-		// case <-halt:
-		// 	return
-		// default:
-		// 	op()
-		// }
+		select {
+		case <-halt:
+			return
+		default:
+			op()
+		}
 	}
 }
 
@@ -51,21 +50,21 @@ func (e *Executor) Run() {
 	var o int64 = 0
 
 	if e.Load.Reads > 0 {
-		op := ReadGenerator(e.Client, e.Keys)
+		readOp := ReadGenerator(e.Client, e.Keys)
 		for i = 0; i < e.Load.Reads; i++ {
 			halt := make(chan bool)
 			haltChannels = append(haltChannels, halt)
-			go executeOp(halt, op)
+			go executeOp(halt, readOp)
 		}
 		o += i
 	}
 
 	if e.Load.Writes > 0 {
-		op := WriteGenerator(e.Client, e.Keys, e.Records)
+		writeOp := WriteGenerator(e.Client, e.Keys, e.Records)
 		for i = 0; i < e.Load.Writes; i++ {
 			halt := make(chan bool)
 			haltChannels = append(haltChannels, halt)
-			go executeOp(halt, op)
+			go executeOp(halt, writeOp)
 		}
 		o += i
 	}

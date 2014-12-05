@@ -7,25 +7,22 @@ import (
 )
 
 type KeyGenerator interface {
-	GenerateKey() *aerospike.Key
+	GetKey() *aerospike.Key
 }
 
 type PooledKeyGenerator struct {
 	Size     int64
 	Capacity int64
 	Keys     []*aerospike.Key
-	Load     *LoadModel
-	Data     *DataModel
+	Model    *DataModel
 }
 
-func NewPooledKeyGenerator(load *LoadModel, data *DataModel) *PooledKeyGenerator {
-	n := int64(load.Keys)
+func NewPooledKeyGenerator(model *DataModel, n int64) *PooledKeyGenerator {
 	g := &PooledKeyGenerator{
 		Size:     0,
 		Capacity: n,
 		Keys:     make([]*aerospike.Key, n),
-		Load:     load,
-		Data:     data,
+		Model:    model,
 	}
 	return g
 }
@@ -33,14 +30,14 @@ func NewPooledKeyGenerator(load *LoadModel, data *DataModel) *PooledKeyGenerator
 func (g *PooledKeyGenerator) generate() {
 	var i int64
 	for i = 0; i < g.Capacity; i++ {
-		if key, err := aerospike.NewKey(g.Data.Keys.Namespace, g.Data.Keys.Set, GenerateValueSeed(&g.Data.Keys.Key, i)); err == nil {
+		if key, err := aerospike.NewKey(g.Model.Keys.Namespace, g.Model.Keys.Set, GenerateValueSeed(&g.Model.Keys.Key, i)); err == nil {
 			g.Keys[i] = key
 			atomic.AddInt64(&g.Size, 1)
 		}
 	}
 }
 
-func (g *PooledKeyGenerator) GenerateKey() *aerospike.Key {
+func (g *PooledKeyGenerator) GetKey() *aerospike.Key {
 	n := g.Size
 	if n > 0 {
 		i := rand.Int63() % n

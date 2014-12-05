@@ -102,7 +102,6 @@ func main() {
 
 	// utlize full cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
-	// debug.SetGCPercent(percent)
 
 	// services
 	go statsService(logInterval)
@@ -158,10 +157,12 @@ func execute() *Executor {
 		}
 	}
 
-	// create generators
-	keys := NewPooledKeyGenerator(loadModel, dataModel)
+	// generate keys
+	keys := NewPooledKeyGenerator(dataModel, loadModel.Keys)
 	keys.generate()
-	recs := NewPooledRecordGenerator(loadModel, dataModel)
+
+	// generate record permutations
+	recs := NewPooledRecordGenerator(dataModel, 100)
 	recs.generate()
 
 	// new executor
