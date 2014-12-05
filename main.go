@@ -102,6 +102,7 @@ func main() {
 
 	// utlize full cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
+	// debug.SetGCPercent(percent)
 
 	// services
 	go statsService(logInterval)

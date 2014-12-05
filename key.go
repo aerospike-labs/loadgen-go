@@ -42,7 +42,7 @@ func (g *PooledKeyGenerator) generate() {
 }
 
 func (g *PooledKeyGenerator) GenerateKey() *aerospike.Key {
-	n := atomic.LoadInt64(&g.Size)
+	n := g.Size
 	if n > 0 {
 		i := rand.Int63() % n
 		return g.Keys[i]
