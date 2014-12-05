@@ -2,11 +2,8 @@ package main
 
 import (
 	"errors"
-	// "fmt"
 	yaml "gopkg.in/yaml.v2"
 	"io/ioutil"
-	"os"
-	// "strings"
 )
 
 // ----------------------------------------------------------------------------
@@ -130,127 +127,6 @@ func (c *Config) Load(filepath string) error {
 	if err != nil {
 		return err
 	}
-
-	return nil
-}
-
-func (c *Config) Store(filepath string) error {
-
-	var err error
-
-	raw, err := yaml.Marshal(c)
-	if err != nil {
-		return err
-	}
-
-	err = ioutil.WriteFile(filepath, raw, os.FileMode(0644))
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-// ----------------------------------------------------------------------------
-//
-// DataModelList Methods
-//
-// ----------------------------------------------------------------------------
-
-func (l DataModelList) Len() int           { return len(l) }
-func (l DataModelList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
-func (l DataModelList) Less(i, j int) bool { return l[i].Id < l[j].Id }
-
-// Index of Host by Id
-func (l DataModelList) IndexById(id string) (int, error) {
-
-	if len(id) == 0 {
-		return -1, ErrModelIdInvalid
-	}
-
-	for j, a := range l {
-		if a.Id == id {
-			return j, nil
-			break
-		}
-	}
-
-	return -1, ErrModelNotFound
-}
-
-// Find a Host by Id
-func (l DataModelList) FindById(id string) (*DataModel, error) {
-
-	i, err := l.IndexById(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return l[i], nil
-}
-
-// Remove a DataModel
-func (l DataModelList) RemoveById(id string) error {
-
-	i, err := l.IndexById(id)
-	if err != nil {
-		return err
-	}
-
-	l[i] = nil
-	l = append(l[:i], l[i+1:]...)
-
-	return nil
-}
-
-// ----------------------------------------------------------------------------
-//
-// LoadModelList Methods
-//
-// ----------------------------------------------------------------------------
-
-func (l LoadModelList) Len() int           { return len(l) }
-func (l LoadModelList) Swap(i, j int)      { l[i], l[j] = l[j], l[i] }
-func (l LoadModelList) Less(i, j int) bool { return l[i].Id < l[j].Id }
-
-// Index of LoadModel by Id
-func (l LoadModelList) IndexById(id string) (int, error) {
-
-	if len(id) == 0 {
-		return -1, ErrModelIdInvalid
-	}
-
-	for j, a := range l {
-		if a.Id == id {
-			return j, nil
-			break
-		}
-	}
-
-	return -1, ErrModelNotFound
-}
-
-// Find a LoadModel by Id
-func (l LoadModelList) FindById(id string) (*LoadModel, error) {
-
-	i, err := l.IndexById(id)
-	if err != nil {
-		return nil, err
-	}
-
-	return l[i], nil
-}
-
-// Remove a LoadModel
-func (l LoadModelList) RemoveById(id string) error {
-
-	i, err := l.IndexById(id)
-	if err != nil {
-		return err
-	}
-
-	l[i] = nil
-	l = append(l[:i], l[i+1:]...)
 
 	return nil
 }

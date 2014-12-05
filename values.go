@@ -1,17 +1,13 @@
 package main
 
 import (
-	// "fmt"
 	as "github.com/aerospike/aerospike-client-go"
-	// "math"
 	"math/rand"
-	// "time"
 	"strconv"
 	"strings"
 )
 
 var (
-	// RANDOM                  = rand.New(rand.NewSource(time.Now().UnixNano()))
 	GENERATOR_CHARSET_ALPHA = []rune("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ")
 )
 
