@@ -27,7 +27,6 @@ func NewPooledKeyGenerator(load *LoadModel, data *DataModel) *PooledKeyGenerator
 		Load:     load,
 		Data:     data,
 	}
-	go g.generate()
 	return g
 }
 
