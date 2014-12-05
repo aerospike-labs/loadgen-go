@@ -18,7 +18,7 @@ var (
 	spec                      = map[string]interface{}{}
 	pidFile     string        = "loadgen.pid"
 	logFile     string        = "loadgen.log"
-	modelsFile  string        = "models.yml"
+	configFile  string        = "config.yml"
 	loadId      string        = "default"
 	dataId      string        = "default"
 	logInterval time.Duration = time.Second
@@ -36,7 +36,7 @@ func main() {
 	// parse arguments
 	flag.StringVar(&pidFile, "pid", pidFile, "Path to PID file.")
 	flag.StringVar(&logFile, "log", logFile, "Path to log file.")
-	flag.StringVar(&modelsFile, "models", modelsFile, "Path to models specification file.")
+	flag.StringVar(&configFile, "config", configFile, "Path to configuration file.")
 	flag.StringVar(&loadId, "load", loadId, "The identifier of the load model to use.")
 	flag.StringVar(&dataId, "data", dataId, "The identifier of the data model to use.")
 	flag.DurationVar(&logInterval, "log-interval", logInterval, "Logging interval in seconds.")
@@ -124,14 +124,14 @@ func execute() *Executor {
 
 	var err error = nil
 
-	// load models
-	models := NewModels()
-	err = models.Load(modelsFile)
+	// load config
+	config := NewConfig()
+	err = config.Load(configFile)
 	panicOnError(err)
 
 	// iterate over hosts
-	hosts := make([]*aerospike.Host, len(models.Hosts))
-	for i, h := range models.Hosts {
+	hosts := make([]*aerospike.Host, len(config.Hosts))
+	for i, h := range config.Hosts {
 		hosts[i] = aerospike.NewHost(h.Addr, h.Port)
 		logInfo("Adding host (%s:%v)", h.Addr, h.Port)
 	}
@@ -143,12 +143,27 @@ func execute() *Executor {
 		panicOnError(err)
 	}
 
+	var loadModel *LoadModel
+	var dataModel *DataModel
+
+	for _, m := range config.LoadModels {
+		if m.Id == loadId {
+			loadModel = m
+		}
+	}
+
+	for _, m := range config.DataModels {
+		if m.Id == dataId {
+			dataModel = m
+		}
+	}
+
 	// create generators
-	keys := NewPooledKeyGenerator(models.LoadModels[0], models.DataModels[0])
-	recs := NewPooledRecordGenerator(models.LoadModels[0], models.DataModels[0])
+	keys := NewPooledKeyGenerator(loadModel, dataModel)
+	recs := NewPooledRecordGenerator(loadModel, dataModel)
 
 	// new executor
-	exec := NewExecutor(client, models.LoadModels[0], keys, recs)
+	exec := NewExecutor(client, loadModel, keys, recs)
 
 	// run
 	logInfo("Running Executor")

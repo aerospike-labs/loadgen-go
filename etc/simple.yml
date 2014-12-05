@@ -27,7 +27,6 @@ Data:
             Min: 1
             Max: 1
 
-
 # -----------------------------------------------------------------------------
 # Load Model
 #
@@ -39,5 +38,5 @@ Load:
 
   - Id: default
     Keys: 100000    # 100k Keys
-    Reads: 40       # 40 concurrent reads
-    Writes: 10      # 10 concurrent writes
+    Reads: 3       # 40 concurrent reads
+    Writes: 1      # 10 concurrent writes

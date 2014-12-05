@@ -97,7 +97,7 @@ type HostSpec struct {
 	Port int    `Port`
 }
 
-type Models struct {
+type Config struct {
 	Hosts      []HostSpec    `Hosts`
 	LoadModels LoadModelList `Load`
 	DataModels DataModelList `Data`
@@ -109,14 +109,15 @@ type Models struct {
 //
 // ----------------------------------------------------------------------------
 
-func NewModels() *Models {
-	return &Models{
+func NewConfig() *Config {
+	return &Config{
+		Hosts:      []HostSpec{},
 		LoadModels: LoadModelList{},
 		DataModels: DataModelList{},
 	}
 }
 
-func (m *Models) Load(filepath string) error {
+func (c *Config) Load(filepath string) error {
 
 	var err error
 
@@ -125,7 +126,7 @@ func (m *Models) Load(filepath string) error {
 		return err
 	}
 
-	err = yaml.Unmarshal(raw, m)
+	err = yaml.Unmarshal(raw, c)
 	if err != nil {
 		return err
 	}
@@ -133,11 +134,11 @@ func (m *Models) Load(filepath string) error {
 	return nil
 }
 
-func (m *Models) Store(filepath string) error {
+func (c *Config) Store(filepath string) error {
 
 	var err error
 
-	raw, err := yaml.Marshal(m)
+	raw, err := yaml.Marshal(c)
 	if err != nil {
 		return err
 	}
@@ -148,16 +149,6 @@ func (m *Models) Store(filepath string) error {
 	}
 
 	return nil
-}
-
-func (m *Models) Marshal() ([]byte, error) {
-
-	raw, err := yaml.Marshal(m)
-	if err != nil {
-		return nil, err
-	}
-
-	return raw, nil
 }
 
 // ----------------------------------------------------------------------------
