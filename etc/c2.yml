@@ -1,0 +1,34 @@
+Hosts:
+- Addr: 192.168.106.181
+  Port: 3000
+- Addr: 192.168.105.168
+  Port: 3000
+Load:
+- Id: default
+  Keys: 1000000
+  Reads: 1
+  Writes: 0
+  Deletes: 0
+  Queries: 0
+  Scans: 0
+Data:
+- Id: default
+  Keys:
+    Namespace: test
+    Set: demo
+    Key:
+      String:
+        Min: 20
+        Max: 256
+  Bins:
+  - Name: a
+    Value:
+      Integer:
+        Min: 1
+        Max: 1000000
+    Indexed: true
+  - Name: b
+    Value:
+      String:
+        Min: 0
+        Max: 1024
