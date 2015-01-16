@@ -1,0 +1,40 @@
+hosts:
+- addr: 192.168.106.169
+  port: 3000
+- addr: 192.168.106.181
+  port: 3000
+
+# -----------------------------------------------------------------------------
+# data model
+#
+# defines one or many data models, which can be references by different loads
+# each data model describes the key and the bins for each record
+# -----------------------------------------------------------------------------
+data:
+
+  keys:
+    namespace: test
+    set: foo
+    key:
+      integer:
+        min: 1
+        max: 100000
+  bins:
+    - name: a
+      value:
+        integer:
+          min: 1
+          max: 1
+
+# -----------------------------------------------------------------------------
+# load model
+#
+# defines one or many load models, which can be executed
+# each load model describes the which data model should be used, and the work
+# balance.
+# -----------------------------------------------------------------------------
+load:
+
+  keys: 100000    # 100k keys
+  reads: 3       # 40 concurrent reads
+  writes: 1      # 10 concurrent writes

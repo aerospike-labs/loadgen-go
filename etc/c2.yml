@@ -27,8 +27,3 @@ Data:
         Min: 1
         Max: 1000000
     Indexed: true
-  - Name: b
-    Value:
-      String:
-        Min: 0
-        Max: 1024

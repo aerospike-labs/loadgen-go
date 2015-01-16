@@ -159,7 +159,7 @@ func GenerateBin(c *BinConstraints) *as.Bin {
 	return b
 }
 
-func GenerateBins(l BinConstraintsList) []*as.Bin {
+func GenerateBins(l []*BinConstraints) []*as.Bin {
 	bins := make([]*as.Bin, len(l))
 	for i, c := range l {
 		bin := GenerateBin(c)

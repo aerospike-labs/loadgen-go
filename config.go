@@ -19,85 +19,77 @@ var (
 )
 
 type IntegerConstraints struct {
-	Min int64 `Min`
-	Max int64 `Max`
+	Min int64 `json:"min"`
+	Max int64 `json:"max"`
 }
 
 type StringConstraints struct {
-	Min int64 `Min`
-	Max int64 `Max`
+	Min int64 `json:"min"`
+	Max int64 `json:"max"`
 }
 
 type BytesConstraints struct {
-	Min int64 `Min`
-	Max int64 `Max`
+	Min int64 `json:"min"`
+	Max int64 `json:"max"`
 }
 
 type ListConstraints struct {
-	Min   int64       `Min`
-	Max   int64       `Max`
-	Value Constraints `Value`
+	Min   int64       `json:"min"`
+	Max   int64       `json:"max"`
+	Value Constraints `json:"value"`
 }
 
 type MapConstraints struct {
-	Min   int64       `Min`
-	Max   int64       `Max`
-	Key   Constraints `json:"Key,omitempty" yaml:"Key,omitempty"`
-	Value Constraints `json:"Value,omitempty" yaml:"Value,omitempty"`
+	Min   int64       `json:"min"`
+	Max   int64       `json:"max"`
+	Key   Constraints `json:"key,omitempty"`
+	Value Constraints `json:"value,omitempty"`
 }
 
 type Constraints struct {
-	Integer *IntegerConstraints `json:"Integer,omitempty" yaml:"Integer,omitempty"`
-	String  *StringConstraints  `json:"String,omitempty" yaml:"String,omitempty"`
-	Bytes   *BytesConstraints   `json:"Bytes,omitempty" yaml:"Bytes,omitempty"`
-	List    *ListConstraints    `json:"List,omitempty" yaml:"List,omitempty"`
-	Map     *MapConstraints     `json:"Map,omitempty" yaml:"Map,omitempty"`
+	Integer *IntegerConstraints `json:"integer,omitempty"`
+	String  *StringConstraints  `json:"string,omitempty"`
+	Bytes   *BytesConstraints   `json:"bytes,omitempty"`
+	List    *ListConstraints    `json:"list,omitempty"`
+	Map     *MapConstraints     `json:"map,omitempty"`
 }
 
 type BinConstraints struct {
-	Name     string      `Name`
-	Value    Constraints `Value`
-	Optional bool        `json:"Optional,omitempty" yaml:"Optional,omitempty"`
-	Indexed  bool        `json:"Indexed,omitempty" yaml:"Indexed,omitempty"`
+	Name     string      `json:"name"`
+	Value    Constraints `json:"value"`
+	Optional bool        `json:"optional,omitempty"`
+	Indexed  bool        `json:"indexed,omitempty"`
 }
 
-type BinConstraintsList []*BinConstraints
-
 type KeyConstraints struct {
-	Namespace string      `Namespace`
-	Set       string      `Set`
-	Key       Constraints `Key`
+	Namespace string      `json:"namespace"`
+	Set       string      `json:"set"`
+	Key       Constraints `json:"key"`
 }
 
 type DataModel struct {
-	Id   string             `Id`
-	Keys KeyConstraints     `Keys`
-	Bins BinConstraintsList `Bins`
+	Keys KeyConstraints    `json:"keys"`
+	Bins []*BinConstraints `json:"bins"`
 }
-
-type DataModelList []*DataModel
 
 type LoadModel struct {
-	Id      string `Id`
-	Keys    int64  `Keys`
-	Reads   int64  `Reads`
-	Writes  int64  `Writes`
-	Deletes int64  `Deletes`
-	Queries int64  `Queries`
-	Scans   int64  `Scans`
+	Keys    int64 `json:"keys"`
+	Reads   int64 `json:"reads"`
+	Writes  int64 `json:"writes"`
+	Deletes int64 `json:"deletes"`
+	Queries int64 `json:"queries"`
+	Scans   int64 `json:"scans"`
 }
 
-type LoadModelList []*LoadModel
-
 type HostSpec struct {
-	Addr string `Addr`
-	Port int    `Port`
+	Addr string `json:"addr"`
+	Port int    `json:"port"`
 }
 
 type Config struct {
-	Hosts      []HostSpec    `Hosts`
-	LoadModels LoadModelList `Load`
-	DataModels DataModelList `Data`
+	Hosts     []HostSpec `json:"hosts"`
+	LoadModel LoadModel  `json:"load"`
+	DataModel DataModel  `json:"data"`
 }
 
 // ----------------------------------------------------------------------------
@@ -108,9 +100,9 @@ type Config struct {
 
 func NewConfig() *Config {
 	return &Config{
-		Hosts:      []HostSpec{},
-		LoadModels: LoadModelList{},
-		DataModels: DataModelList{},
+		Hosts:     []HostSpec{},
+		LoadModel: LoadModel{},
+		DataModel: DataModel{},
 	}
 }
 
