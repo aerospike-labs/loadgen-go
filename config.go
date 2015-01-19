@@ -87,9 +87,9 @@ type HostSpec struct {
 }
 
 type Config struct {
-	Hosts     []HostSpec `json:"hosts"`
-	LoadModel LoadModel  `json:"load"`
-	DataModel DataModel  `json:"data"`
+	Hosts     []HostSpec `json:"hosts" yml:"hosts"`
+	LoadModel LoadModel  `json:"load" yml:"load"`
+	DataModel DataModel  `json:"data" yml:"data"`
 }
 
 // ----------------------------------------------------------------------------
