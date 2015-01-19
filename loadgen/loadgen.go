@@ -6,6 +6,7 @@ import (
 	"bytes"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 )
 
@@ -83,7 +84,9 @@ func (svc *LoadgenService) Start() error {
 	var cmd *exec.Cmd
 	var err error
 
-	cmd = exec.Command("bin/loadgen-go", "start")
+	config := filepath.Join(os.Getenv("CONFIG_PATH"), "loadgen.yml")
+
+	cmd = exec.Command("bin/loadgen-go", "-config", config, "start")
 	cmd.Stdout = &stdout
 	cmd.Stderr = &stderr
 
