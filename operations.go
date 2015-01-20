@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"github.com/aerospike/aerospike-client-go"
 )
 
@@ -12,7 +11,6 @@ func ReadGenerator(client *aerospike.Client, keys KeyGenerator) func() {
 
 	return func() {
 		if k := keys.GetKey(); k != nil {
-			fmt.Printf("fee %v\n", k.Value())
 			_, err = client.Get(policy, k)
 			statUpdate(&CURRENT_STATS.Reads, err)
 		}
