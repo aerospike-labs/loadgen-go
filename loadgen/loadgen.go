@@ -77,12 +77,11 @@ func (svc *LoadgenService) Status() (Status, error) {
 		fmt.Println("err: ", errs)
 	}
 
-	if len(errs) > 0 {
+	if len(outs) > 0 {
 		fmt.Println("out: ", outs)
 	}
 
-	out := stdout.String()
-	if strings.Contains(out, "running") {
+	if strings.Contains(outs, "running") || strings.Contains(errs, "running") {
 		return Running, err
 	}
 
