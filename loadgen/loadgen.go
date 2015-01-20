@@ -4,6 +4,7 @@ import (
 	. "github.com/aerospike-labs/minion/service"
 
 	"bytes"
+	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -65,16 +66,27 @@ func (svc *LoadgenService) Status() (Status, error) {
 	cmd.Stderr = &stderr
 
 	err = cmd.Run()
+	outs := stdout.String()
+	errs := stderr.String()
+
 	if err != nil {
-		return Stopped, err
+		fmt.Println("err: ", err.Error())
+	}
+
+	if len(errs) > 0 {
+		fmt.Println("err: ", errs)
+	}
+
+	if len(errs) > 0 {
+		fmt.Println("out: ", outs)
 	}
 
 	out := stdout.String()
 	if strings.Contains(out, "running") {
-		return Running, nil
+		return Running, err
 	}
 
-	return Stopped, nil
+	return Stopped, err
 }
 
 func (svc *LoadgenService) Start() error {
@@ -96,11 +108,22 @@ func (svc *LoadgenService) Start() error {
 	cmd.Stderr = &stderr
 
 	err = cmd.Run()
+	outs := stdout.String()
+	errs := stderr.String()
+
 	if err != nil {
-		return err
+		fmt.Println("err: ", err.Error())
 	}
 
-	return nil
+	if len(errs) > 0 {
+		fmt.Println("err: ", errs)
+	}
+
+	if len(errs) > 0 {
+		fmt.Println("out: ", outs)
+	}
+
+	return err
 }
 
 func (svc *LoadgenService) Stop() error {
@@ -115,11 +138,22 @@ func (svc *LoadgenService) Stop() error {
 	cmd.Stderr = &stderr
 
 	err = cmd.Run()
+	outs := stdout.String()
+	errs := stderr.String()
+
 	if err != nil {
-		return err
+		fmt.Println("err: ", err.Error())
 	}
 
-	return nil
+	if len(errs) > 0 {
+		fmt.Println("err: ", errs)
+	}
+
+	if len(errs) > 0 {
+		fmt.Println("out: ", outs)
+	}
+
+	return err
 }
 
 func (svc *LoadgenService) Stats() (map[string]interface{}, error) {
