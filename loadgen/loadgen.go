@@ -84,7 +84,12 @@ func (svc *LoadgenService) Start() error {
 	var cmd *exec.Cmd
 	var err error
 
-	config := filepath.Join(os.Getenv("CONFIG_PATH"), "loadgen.yml")
+	println("ENV")
+	for _, s := range os.Environ() {
+		println("=> ", s)
+	}
+
+	config := filepath.Join(os.Getenv("CONFIG_PATH"), "generator.yml")
 
 	cmd = exec.Command("bin/loadgen-go", "-config", config, "start")
 	cmd.Stdout = &stdout
