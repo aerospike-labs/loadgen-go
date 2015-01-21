@@ -160,7 +160,7 @@ func sigHup(sig os.Signal) error {
 
 func cmdStatus(context *daemon.Context) {
 
-	if err := os.Stat(context.PidFileName); err != nil {
+	if _, err := os.Stat(context.PidFileName); err != nil {
 		if !os.IsExist(err) {
 			println("stopped")
 			os.Exit(0)
