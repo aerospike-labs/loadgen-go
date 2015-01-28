@@ -17,10 +17,10 @@ func ReadGenerator(client *aerospike.Client, keys KeyGenerator) func() {
 	}
 }
 
-func WriteGenerator(client *aerospike.Client, keys KeyGenerator, records RecordGenerator) func() {
+func WriteGenerator(client *aerospike.Client, keys KeyGenerator, records RecordGenerator, ttl int64) func() {
 
 	var err error
-	policy := aerospike.NewWritePolicy(0, 0)
+	policy := aerospike.NewWritePolicy(0, int32(ttl))
 	policy.SendKey = true
 
 	return func() {

@@ -60,7 +60,7 @@ func (e *Executor) Run() {
 	}
 
 	if e.Load.Writes > 0 {
-		writeOp := WriteGenerator(e.Client, e.Keys, e.Records)
+		writeOp := WriteGenerator(e.Client, e.Keys, e.Records, e.Load.TTL)
 		for i = 0; i < e.Load.Writes; i++ {
 			halt := make(chan bool)
 			haltChannels = append(haltChannels, halt)
