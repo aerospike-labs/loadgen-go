@@ -73,6 +73,7 @@ type DataModel struct {
 }
 
 type LoadModel struct {
+	TTL     int64 `json:"ttl"`
 	Keys    int64 `json:"keys"`
 	Reads   int64 `json:"reads"`
 	Writes  int64 `json:"writes"`
