@@ -241,8 +241,9 @@ func cmdStart(context *daemon.Context) {
 	var dataModel *DataModel = &config.DataModel
 
 	// generate keys
-	keys := NewPooledKeyGenerator(dataModel, loadModel.Keys)
-	keys.generate()
+	// keys := NewPooledKeyGenerator(dataModel, loadModel.Keys)
+	// keys.generate()
+	keys := NewOnDemandKeyGenerator(dataModel, loadModel.Keys)
 
 	// generate record permutations
 	recs := NewPooledRecordGenerator(dataModel, 100)

@@ -1,29 +1,41 @@
-Hosts:
-- Addr: 192.168.106.181
-  Port: 3000
-- Addr: 192.168.105.168
-  Port: 3000
-Load:
-- Id: default
-  Keys: 1000000
-  Reads: 1
-  Writes: 0
-  Deletes: 0
-  Queries: 0
-  Scans: 0
-Data:
-- Id: default
-  Keys:
-    Namespace: test
-    Set: demo
-    Key:
-      String:
-        Min: 20
-        Max: 256
-  Bins:
-  - Name: a
-    Value:
-      Integer:
-        Min: 1
-        Max: 1000000
-    Indexed: true
+hosts:
+- addr: 192.168.106.117
+  port: 3000
+- addr: 192.168.106.137
+  port: 3000
+- addr: 192.168.106.34
+  port: 3000
+- addr: 192.168.106.70
+  port: 3000
+load:
+  ttl: -1
+  keys: 1
+  reads: 10
+  writes: 10
+  deletes: 0
+  queries: 0
+  scans: 0
+data:
+  keys:
+    namespace: test
+    set: demo
+    key:
+      integer:
+        min: 1
+        max: 1000000
+      string: null
+      bytes: null
+      list: null
+      map: null
+  bins:
+  - name: bin1
+    value:
+      integer:
+        min: 1
+        max: 1000000
+      string: null
+      bytes: null
+      list: null
+      map: null
+    optional: false
+    indexed: true
