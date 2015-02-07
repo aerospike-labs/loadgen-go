@@ -49,14 +49,12 @@ func (g *PooledKeyGenerator) GetKey() *aerospike.Key {
 
 type OnDemandKeyGenerator struct {
 	Capacity int64
-	Keys     []*aerospike.Key
 	Model    *DataModel
 }
 
 func NewOnDemandKeyGenerator(model *DataModel, n int64) *OnDemandKeyGenerator {
 	g := &OnDemandKeyGenerator{
 		Capacity: n,
-		Keys:     make([]*aerospike.Key, n),
 		Model:    model,
 	}
 	return g
@@ -64,11 +62,8 @@ func NewOnDemandKeyGenerator(model *DataModel, n int64) *OnDemandKeyGenerator {
 
 func (g *OnDemandKeyGenerator) GetKey() *aerospike.Key {
 	i := rand.Int63() % g.Capacity
-	key := g.Keys[i]
-	if key == nil {
-		if key, err := aerospike.NewKey(g.Model.Keys.Namespace, g.Model.Keys.Set, GenerateValueSeed(&g.Model.Keys.Key, i)); err == nil {
-			g.Keys[i] = key
-		}
+	if key, err := aerospike.NewKey(g.Model.Keys.Namespace, g.Model.Keys.Set, GenerateValueSeed(&g.Model.Keys.Key, i)); err == nil {
+		return key
 	}
-	return key
+	return nil
 }
