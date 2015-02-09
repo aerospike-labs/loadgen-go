@@ -10,6 +10,7 @@ import (
 	"time"
 
 	"github.com/aerospike/aerospike-client-go"
+	asl "github.com/aerospike/aerospike-client-go/logger"
 	daemon "github.com/sevlyar/go-daemon"
 )
 
@@ -18,6 +19,7 @@ var (
 	rootPath    string        = currentDir()
 	pidFile     string        = "log/loadgen.pid"
 	logFile     string        = "log/loadgen.log"
+	aslogFile   string        = "log/aerospike-client.log"
 	configFile  string        = "etc/config.yml"
 	logInterval time.Duration = time.Second
 	verbose     bool          = false
@@ -34,6 +36,7 @@ func main() {
 	// parse arguments
 	flag.StringVar(&pidFile, "pid", pidFile, "Path to PID file.")
 	flag.StringVar(&logFile, "log", logFile, "Path to log file.")
+	flag.StringVar(&aslogFile, "aslog", aslogFile, "Path to aerospike client log file.")
 	flag.StringVar(&configFile, "config", configFile, "Path to configuration file.")
 	flag.DurationVar(&logInterval, "log-interval", logInterval, "Logging interval in seconds.")
 	flag.BoolVar(&verbose, "verbose", verbose, "Verbose logging to stdout.")
@@ -52,6 +55,7 @@ func main() {
 	// check files
 	pidFile = checkFile(pidFile)
 	logFile = checkFile(logFile)
+	aslogFile = checkFile(aslogFile)
 	configFile = checkFile(configFile)
 
 	// daemon context
@@ -211,6 +215,13 @@ func cmdStart(context *daemon.Context) {
 
 	// utlize full cores
 	runtime.GOMAXPROCS(runtime.NumCPU())
+
+	// Aerospike Client Log
+	aslog, err := os.OpenFile(aslogFile, os.O_RDWR|os.O_CREATE, 0755)
+	if err == nil {
+		asl.Logger.SetLogger(log.New(aslog, "aerospike", log.Lshortfile))
+		asl.Logger.SetLevel(asl.INFO)
+	}
 
 	// services
 	go statsService(logInterval)
