@@ -219,7 +219,7 @@ func cmdStart(context *daemon.Context) {
 	// Aerospike Client Log
 	aslog, err := os.OpenFile(aslogFile, os.O_RDWR|os.O_CREATE, 0755)
 	if err == nil {
-		asl.Logger.SetLogger(log.New(aslog, "aerospike", log.Lshortfile))
+		asl.Logger.SetLogger(log.New(aslog, "aerospike", log.Ldate|log.Ltime|log.Lshortfile))
 		asl.Logger.SetLevel(asl.INFO)
 	}
 
